@@ -106,7 +106,7 @@ begin
 	begin
 		if rising_edge(s_9c00_wr_n) then
 			-- chip 6A page 8
-			pal_r(to_integer(unsigned(s_color_addr))) <= I_DB(3 downto 0);
+			pal_r(conv_integer(s_color_addr)) <= I_DB(3 downto 0);
 			-- chip 6B page 8
 			pal_g(conv_integer(s_color_addr)) <= I_DB(7 downto 4);
 		end if;

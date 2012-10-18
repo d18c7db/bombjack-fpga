@@ -51,39 +51,41 @@
 --		adjusted sync pulse widths to more closely match VGA specs
 --		triggers on falling (instead of rising) edge of active low input sync signals to more closely track them
 
---	VGA Signal 640 x 480 @ 60 Hz Industry standard timing
+--	Horizonal Timing
+-- _____________              ______________________              ______________________
+-- ENABLE       |____________|         ENABLE       |____________|         ENABLE
+-- _____________              ______________________              _____________________
+-- VIDEO (last) |____________|         VIDEO        |____________|         VIDEO (next)
+-- -hD----------|-hA-|hB|-hC-|----------hD----------|-hA-|hB|-hC-|----------hD---------
+-- __________________|  |________________________________|  |__________________________
+-- SYNC              |__|              SYNC              |__|              SYNC
 --
---	General timing
---
---	Screen refresh rate	60 Hz
---	Vertical refresh	31.46875 kHz
---	Pixel freq.	25.175 MHz
---
---	Horizontal timing (line)
---
---	Polarity of horizontal sync pulse is negative.
---	Scanline part	Pixels	Time [µs]
---	Visible area	640		25.422045680238
---	Front porch		16			0.6355511420060
---	Sync pulse		96			3.8133068520357
---	Back porch		48			1.9066534260179
---	Whole line		800		31.777557100298
---
---	Vertical timing (frame)
---
---	Polarity of vertical sync pulse is negative.
---	Frame part		Lines	Time [ms]
---	Visible area	480	15.253227408143
---	Front porch		10		0.3177755710030
---	Sync pulse		2		0.0635551142006
---	Back porch		33		1.0486593843098
---	Whole frame		525	16.683217477656
+-- Vertical Timing
+-- _____________              ______________________              ______________________
+-- ENABLE||||||||____________||||||||||ENABLE||||||||____________||||||||||ENABLE|||||||
+-- _____________              ______________________              _____________________
+-- VIDEO (last)||____________||||||||||VIDEO|||||||||____________||||||||||VIDEO (next)
+-- -vD----------|-vA-|vB|-vC-|----------vD----------|-vA-|vB|-vC-|----------vD---------
+-- __________________|  |________________________________|  |__________________________
+-- SYNC              |__|              SYNC              |__|              SYNC
 
+-- Scan doubler input and output timings compared to standard VGA
+--	Resolution   - Frame   | Pixel      | Front     | Sync       | Back       | Active      | H Sync   | Front    | Sync     | Back     | Active    | V Sync
+--              - Rate    | Clock      | Porch hA  | Pulse hB   | Porch hC   | Video hD    | Polarity | Porch vA | Pulse vB | Porch vC | Video vD  | Polarity
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+--  In  256x224 - 59.2Hz  |  6.000 MHz | 48 pixels |  32 pixels |  48 pixels |  256 pixels | negative | 16 lines | 8 lines  | 16 lines | 224 lines | negative
+--  Out 512x448 - 59.2Hz  | 12.000 MHz | 48 pixels |  46 pixels |  34 pixels |  512 pixels | negative | 32 lines | 2 lines  | 46 lines | 448 lines | negative
+--  VGA 640x480 - 60.0Hz  | 25.175 MHz | 16 pixels |  96 pixels |  48 pixels |  640 pixels | negative | 11 lines | 2 lines  | 31 lines | 480 lines | negative
 
 library ieee;
 	use ieee.std_logic_1164.all;
 	use ieee.std_logic_unsigned.all;
 	use ieee.numeric_std.all;
+
+--pragma translate_off
+	use ieee.std_logic_textio.all;
+	use std.textio.all;
+--pragma translate_on
 
 library UNISIM;
 	use UNISIM.Vcomponents.all;
@@ -121,10 +123,24 @@ architecture RTL of VGA_SCANDBL is
 	signal hpos_o			: std_logic_vector( 8 downto 0) := (others => '0');
 	signal rgb_out			: std_logic_vector(15 downto 0) := (others => '0');
 	signal vs_cnt			: std_logic_vector( 1 downto 0) := (others => '0');
+
+	-- used to shift (center) output picture on screen
+	-- affects hA and hC values in timing diagram above
+	-- small  offset gives a large hA (shifts picture right)
+	-- bigger offset gives a small hA (shifts picture left)
+	constant offset		: std_logic_vector( 8 downto 0) := "000100100";
+
+--pragma translate_off
+	signal qidx				: std_logic_vector( 7 downto 0) := (others => '0');
+	signal lidx				: std_logic_vector(10 downto 0) := (others => '0');
+	signal vidx				: std_logic_vector( 7 downto 0) := (others => '0');
+
+	file qfile				: TEXT open write_mode is "..\screens\qvga0.ppm";
+--pragma translate_on
 begin
 
 	u_ram : RAMB16_S18_S18
-	generic map (INIT_A => X"00000", INIT_B => X"00000", SIM_COLLISION_CHECK => "ALL")  -- "NONE", "WARNING", "GENERATE_X_ONLY", "ALL"
+		generic map (INIT_A => X"00000", INIT_B => X"00000", SIM_COLLISION_CHECK => "NONE")  -- "NONE", "WARNING", "GENERATE_X_ONLY", "ALL"
 		port map (
 			-- input
 			DOA					=> open,
@@ -154,6 +170,12 @@ begin
 	p_input_timing : process(CLK)
 		variable falling_h	: boolean;
 		variable falling_v	: boolean;
+--pragma translate_off
+		variable rising_h		: boolean;
+		variable rising_v		: boolean;
+		variable armed			: boolean;
+		variable s				: line; -- debug
+--pragma translate_on
 	begin
 		if rising_edge (CLK) then
 			ihs_t1 <= I_HSYNC;
@@ -161,6 +183,37 @@ begin
 
 			falling_h := (I_HSYNC = '0') and (ihs_t1 = '1');
 			falling_v := (I_VSYNC = '0') and (ivs_t1 = '1');
+--pragma translate_off
+			rising_h  := (I_HSYNC = '1') and (ihs_t1 = '0');
+			rising_v  := (I_VSYNC = '1') and (ivs_t1 = '0');
+
+-- debug begin, write .ppm format video frames to output files
+			if rising_v then					-- at start of frame
+				armed := true;
+			end if;
+
+			if rising_h and armed then		-- at start of frame
+				armed := false;
+				qidx <= qidx + 1;				-- frame number
+				file_close(qfile);
+				write(s,"..\screens\qvga"); write(s,conv_integer(qidx)); write(s,".ppm");
+				file_open(qfile,s.all, WRITE_MODE);
+				writeline(output,s);
+				--	# The P3 means colors are in ASCII, then 352 columns and 256 rows, then 15 for max color, then RGB triplets
+				write(s,"P3");						writeline(qfile,s);	--	P3
+				write(s,"# "); write(s, now);	writeline(qfile,s);	-- sim time
+				write(s,"352 256");				writeline(qfile,s);	--	352 256
+				write(s,"15");						writeline(qfile,s);	--	15
+			end if;
+
+			if (I_HSYNC = '1' and I_VSYNC = '1') then
+				write(s, conv_integer(I_VIDEO(11 downto 8)) ); write(s," ");	-- R
+				write(s, conv_integer(I_VIDEO( 7 downto 4)) ); write(s," ");	-- G
+				write(s, conv_integer(I_VIDEO( 3 downto 0)) );						-- B
+				writeline(qfile,s);
+			end if;
+-- debug end
+--pragma translate_on
 
 			if falling_v then
 				bank_i <= '0';
@@ -187,8 +240,8 @@ begin
 			falling_h := (I_HSYNC = '0') and (ohs_t1 = '1');
 			falling_v := (I_VSYNC = '0') and (ovs_t1 = '1');
 
-			if falling_h or (hpos_o = hsize_i) then
-				hpos_o <= (others => '0');
+			if falling_h or (hpos_o = hsize_i + offset) then
+				hpos_o <= offset; --(others => '0');
 			else
 				hpos_o <= hpos_o + "1";
 			end if;
