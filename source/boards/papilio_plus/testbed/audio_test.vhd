@@ -51,7 +51,7 @@ library ieee;
 library unisim;
 	use unisim.vcomponents.all;
 
-entity BOMB_JACK_TOP is
+entity PAPILIO_TOP is
 	port(
 		-- FLASH
 		FLASH_CS		: out		std_logic;								-- Active low FLASH chip select
@@ -86,9 +86,9 @@ entity BOMB_JACK_TOP is
 		CLK_IN		: in		std_logic := '0'						-- System clock 32Mhz
 
 	);
-end BOMB_JACK_TOP;
+end PAPILIO_TOP;
 
-architecture RTL of BOMB_JACK_TOP is
+architecture RTL of PAPILIO_TOP is
 	-- debug signals
 	signal cycle 				: std_logic_vector(19 downto 0) := (others => '0');
 	signal edge 				: std_logic_vector( 1 downto 0) := (others => '0');

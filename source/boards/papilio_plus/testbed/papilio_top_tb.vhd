@@ -39,7 +39,7 @@ library unisim;
 	use unisim.vcomponents.all;
 
 entity bj_tb is
-		generic(stim_file: string :="..\source\testbed\stim.txt");
+		generic(stim_file: string :="..\source\boards\papilio_plus\testbed\stim.txt");
 end bj_tb;
  
 architecture behavior of bj_tb is
@@ -54,7 +54,7 @@ architecture behavior of bj_tb is
     end component;
 
     -- Component Declaration for the Unit Under Test (UUT)
-    component BOMB_JACK_TOP
+    component PAPILIO_TOP
     port(
          FLASH_CS    : out std_logic;
          FLASH_SI    : out std_logic;
@@ -118,7 +118,7 @@ begin
 	SRAM_D(15 downto 8) <= x"00";
 
 	-- Instantiate the unit under test (uut)
-	uut: BOMB_JACK_TOP port map (
+	uut: PAPILIO_TOP port map (
 		FLASH_CS => FLASH_CS,
 		FLASH_SI => FLASH_SI,
 		FLASH_SO => FLASH_SO,

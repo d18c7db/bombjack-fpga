@@ -128,7 +128,7 @@ architecture RTL of VGA_SCANDBL is
 	-- affects hA and hC values in timing diagram above
 	-- small  offset gives a large hA (shifts picture right)
 	-- bigger offset gives a small hA (shifts picture left)
-	constant offset		: std_logic_vector( 8 downto 0) := "000100100";
+	constant offset		: std_logic_vector( 8 downto 0) := "000000000";
 
 --pragma translate_off
 	signal qidx				: std_logic_vector( 7 downto 0) := (others => '0');

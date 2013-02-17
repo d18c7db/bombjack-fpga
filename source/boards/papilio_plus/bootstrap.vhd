@@ -35,7 +35,7 @@ entity bootstrap is
 		O_FLASH_CS		: out std_logic;
 		O_FLASH_SI		: out std_logic;
 		-- SRAM interface
-		O_A				: out std_logic_vector (17 downto 0);
+		O_A				: out std_logic_vector (18 downto 0);
 		O_DOUT			: out std_logic_vector (7 downto 0) := (others => '0');
 		O_nCS				: out std_logic := '0';
 		O_nWE				: out std_logic := '1';
@@ -71,7 +71,7 @@ architecture RTL of bootstrap is
 	signal flash_done			: std_logic := '0';	-- FLASH init finished when high
 
 	-- bootstrap control of SRAM, these signals connect to SRAM when boostrap_busy = '1'
-	signal bs_A					: std_logic_vector(17 downto 0) := (others => '0');
+	signal bs_A					: std_logic_vector(18 downto 0) := (others => '0');
 
 	-- for bootstrap state machine
 	type	BS_STATE_TYPE is (
@@ -153,7 +153,7 @@ begin
 					bs_state_next <= FLASH1;						-- idle
 				when FLASH1 =>
 --					-- apply patch table here
---					if bs_A = "01" & patch_A(patch_idx) then
+--					if bs_A = "001" & patch_A(patch_idx) then
 --						O_DOUT( 7 downto 0) <= patch_D(patch_idx);
 --						patch_idx <= patch_idx + 1;
 --					else

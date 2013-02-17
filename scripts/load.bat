@@ -1,3 +1,3 @@
 @echo off
 cd ..\..
-papilio-prog.exe -f bombjack_papilio_lx\build\bomb_jack_top.bit
+papilio-prog.exe -f bombjack-papilioplus-fpga\build\papilio_top.bit

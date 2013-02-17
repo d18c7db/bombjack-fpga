@@ -22,6 +22,7 @@ set rom_path_src=..\roms\bombjack
 set rom_path=..\build
 set romgen_path=..\romgen_source
 
+mkdir %rom_path%
 REM generate RAMB structures for larger ROMS
 
 REM ROMS 1 through 8 located on audio/graphics board
