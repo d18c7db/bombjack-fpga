@@ -132,7 +132,7 @@ architecture RTL of YM2149 is
 
 	signal dac_amp				: std_logic_vector(7 downto 0);
 	signal audio_mix			: std_logic_vector(9 downto 0);
-	signal audio_final		: std_logic_vector(9 downto 0);
+	signal audio_final		: std_logic_vector(7 downto 0);
 
 	-- psg, bdir, bc2, bc1
 	type	BUS_STATE_TYPE is ( nop0,AD0,nop1,RD,AD1,nop2,WR,AD2);
@@ -663,7 +663,7 @@ begin
 
 			if (cnt_div(1 downto 0) = "10") then
 				audio_mix   <= (others => '0');
-				audio_final <= audio_mix;
+				audio_final <= audio_mix(9 downto 2);
 			else
 				case cnt_div(1 downto 0) is
 					when "01" =>
@@ -690,7 +690,7 @@ begin
 			O_AUDIO <= (others => '0');
 		elsif rising_edge(CLK) then
 			if (ENA = '1') then
-				O_AUDIO <= audio_final(9 downto 2);
+				O_AUDIO <= audio_final;
 			end if;
 		end if;
 	end process;

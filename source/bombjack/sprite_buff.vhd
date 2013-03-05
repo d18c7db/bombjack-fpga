@@ -108,7 +108,7 @@ begin
 		en						=> s_4X_cs,
 		ssr					=> '0',
 		we						=> clk_6M_n,			-- inverted because unlike the real SRAM, our WE is active high
-		clk					=> I_CLK_12M			-- RAM is accessed on both edges of 6MHz so it needs double clock
+		clk					=> I_CLK_12M
 	);
 
 	-- chips 2C, 2D also 2A, 2B page 5

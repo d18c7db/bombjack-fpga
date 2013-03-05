@@ -34,8 +34,6 @@
 -- 2e 12- (continuous, must be reset with 01)
 
 -- From MAME, the following channels are active
--- Currently there is an issue with 1C (PSG1 Chan C) where the CPU seems to actively mute it
--- and leaves it like that indefinitely, does not seem like a hardware glitch, needs investigation
 --    1A 1B 1C 2A 2B 2C 3A 3B 3C
 -- 10  -  -  -  -  -  -  -  X  X add credit (coin) sound
 -- 20  X  X  X  X  X  -  -  -  - title music
@@ -154,7 +152,22 @@ architecture RTL of PAPILIO_TOP is
 	signal s_256H_r			: std_logic := '0';
 	signal s_contrlda_n		: std_logic := '1';
 	signal s_contrldb_n		: std_logic := '1';
+
 begin
+	-----------------------------------------------
+	-- DCM generates all the system clocks required
+	-----------------------------------------------
+	clockgen : entity work.CLOCKGEN
+	port map(
+		I_CLK			=> CLK_IN,
+		I_RST			=> ext_reset,
+		O_CLK_4M		=> clk_4M_en,
+		O_CLK_6M		=> clk_6M_en,
+		O_CLK_12M	=> clk_12M,
+--		O_CLK_24M	=> open,
+--		O_CLK_32M	=> open,
+		O_CLK_48M	=> clk_48M
+	);
 	da : for i in 0 to 5 generate
 	begin
 		dad : entity work.digit
@@ -238,17 +251,6 @@ begin
 	O_VSYNC		<= VSync;
 	RESETn		<= not ext_reset;
 	ext_reset	<= (I_SW(0) and I_SW(1) and I_SW(2) and I_SW(3));	-- active high reset when all buttons pressed (active low buttons)
-
-	-- uses DCM to generate all the system clocks required
-	clockgen : entity work.CLOCKGEN
-	port map(
-		I_CLK			=> CLK_IN,
-		I_RST			=> ext_reset,
-		O_CLK_4M		=> clk_4M_en,
-		O_CLK_6M		=> clk_6M_en,
-		O_CLK_12M	=> clk_12M,
-		O_CLK_48M	=> clk_48M
-	);
 
 	-- video scan doubler required to display video on VGA hardware
 	scan_dbl : entity work.VGA_SCANDBL

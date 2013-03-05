@@ -41,17 +41,13 @@ end sprite_position;
 architecture RTL of sprite_position is
 	signal s_bus_u1			: std_logic_vector( 7 downto 0) := (others => '0');
 	signal s_bus_u2			: std_logic_vector( 7 downto 0) := (others => '0');
-	signal s_clk_12M_n		: std_logic := '0';
 begin
-	-- turns out it's critical that the BRAM runs off inverted 12M to create the
-	-- delay required by the other components running off 6M clock
-	-- rising edge of /12M must fall in the middle of each 6M half cycle or in other words
-	-- rising edge of /12M must not coincide with rising or falling edge of 6M
+	-- it's critical that the BRAM runs off 12M to meet timing required by the other components running off 6M clock
+	-- rising edge of 12M clock MUST fall in the middle of each 6M clock cycle
 	--        _   _   _   _   
-	-- /12M _| |_| |_| |_| |_
+	--  12M _/ \_/ \_/ \_/ \_
 	--          ___     ___
-	--   6M ___|   |___|   |_
-	s_clk_12M_n <= not I_CLK_12M;
+	--   6M ___/   \___/   \_
 
 	-- duplicate circuit on page 5 has been implemented as a module in order to simply reuse it
 
@@ -59,7 +55,7 @@ begin
 	-- these handle odd scan lines
 	u_odd : entity work.sprite_buff
 	port map (
-		I_CLK_12M			=> s_clk_12M_n,
+		I_CLK_12M			=> I_CLK_12M,
 		I_CLK_6M_EN			=> I_CLK_6M_EN,
 		I_1V					=> I_1V_n_r,
 		I_256H				=> I_256H_r,
@@ -77,7 +73,7 @@ begin
 	-- these handle even scan lines
 	u_even : entity work.sprite_buff
 	port map (
-		I_CLK_12M			=> s_clk_12M_n,
+		I_CLK_12M			=> I_CLK_12M,
 		I_CLK_6M_EN			=> I_CLK_6M_EN,
 		I_1V					=> I_1V_r,
 		I_256H				=> I_256H_r,

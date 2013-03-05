@@ -51,31 +51,34 @@
 --		adjusted sync pulse widths to more closely match VGA specs
 --		triggers on falling (instead of rising) edge of active low input sync signals to more closely track them
 
---	Horizonal Timing
--- _____________              ______________________              ______________________
--- ENABLE       |____________|         ENABLE       |____________|         ENABLE
--- _____________              ______________________              _____________________
--- VIDEO (last) |____________|         VIDEO        |____________|         VIDEO (next)
--- -hD----------|-hA-|hB|-hC-|----------hD----------|-hA-|hB|-hC-|----------hD---------
--- __________________|  |________________________________|  |__________________________
--- SYNC              |__|              SYNC              |__|              SYNC
+--	VGA Signal 640 x 480 @ 60 Hz Industry standard timing
 --
--- Vertical Timing
--- _____________              ______________________              ______________________
--- ENABLE||||||||____________||||||||||ENABLE||||||||____________||||||||||ENABLE|||||||
--- _____________              ______________________              _____________________
--- VIDEO (last)||____________||||||||||VIDEO|||||||||____________||||||||||VIDEO (next)
--- -vD----------|-vA-|vB|-vC-|----------vD----------|-vA-|vB|-vC-|----------vD---------
--- __________________|  |________________________________|  |__________________________
--- SYNC              |__|              SYNC              |__|              SYNC
+--	General timing
+--
+--	Screen refresh rate	60 Hz
+--	Vertical refresh	31.46875 kHz
+--	Pixel freq.	25.175 MHz
+--
+--	Horizontal timing (line)
+--
+--	Polarity of horizontal sync pulse is negative.
+--	Scanline part	Pixels	Time [µs]
+--	Visible area	640		25.422045680238
+--	Front porch		16			0.6355511420060
+--	Sync pulse		96			3.8133068520357
+--	Back porch		48			1.9066534260179
+--	Whole line		800		31.777557100298
+--
+--	Vertical timing (frame)
+--
+--	Polarity of vertical sync pulse is negative.
+--	Frame part		Lines	Time [ms]
+--	Visible area	480	15.253227408143
+--	Front porch		10		0.3177755710030
+--	Sync pulse		2		0.0635551142006
+--	Back porch		33		1.0486593843098
+--	Whole frame		525	16.683217477656
 
--- Scan doubler input and output timings compared to standard VGA
---	Resolution   - Frame   | Pixel      | Front     | Sync       | Back       | Active      | H Sync   | Front    | Sync     | Back     | Active    | V Sync
---              - Rate    | Clock      | Porch hA  | Pulse hB   | Porch hC   | Video hD    | Polarity | Porch vA | Pulse vB | Porch vC | Video vD  | Polarity
--------------------------------------------------------------------------------------------------------------------------------------------------------------
---  In  256x224 - 59.2Hz  |  6.000 MHz | 48 pixels |  32 pixels |  48 pixels |  256 pixels | negative | 16 lines | 8 lines  | 16 lines | 224 lines | negative
---  Out 512x448 - 59.2Hz  | 12.000 MHz | 48 pixels |  46 pixels |  34 pixels |  512 pixels | negative | 32 lines | 2 lines  | 46 lines | 448 lines | negative
---  VGA 640x480 - 60.0Hz  | 25.175 MHz | 16 pixels |  96 pixels |  48 pixels |  640 pixels | negative | 11 lines | 2 lines  | 31 lines | 480 lines | negative
 
 library ieee;
 	use ieee.std_logic_1164.all;
@@ -125,9 +128,7 @@ architecture RTL of VGA_SCANDBL is
 	signal vs_cnt			: std_logic_vector( 1 downto 0) := (others => '0');
 
 	-- used to shift (center) output picture on screen
-	-- affects hA and hC values in timing diagram above
-	-- small  offset gives a large hA (shifts picture right)
-	-- bigger offset gives a small hA (shifts picture left)
+	-- small values shift right, bigger values shift left
 	constant offset		: std_logic_vector( 8 downto 0) := "000000000";
 
 --pragma translate_off

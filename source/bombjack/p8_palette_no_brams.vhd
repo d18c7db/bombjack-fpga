@@ -56,9 +56,7 @@ architecture RTL of palette is
 	signal s_5M6			: std_logic := '0';
 	signal s_8G6			: std_logic := '0';
 	signal s_9c00_rd_n	: std_logic := '1';
-	signal s_9c00_wr_n	: std_logic := '1';
 	signal s_9c01_rd_n	: std_logic := '1';
-	signal s_9c01_wr_n	: std_logic := '1';
 	type  array_256x4 is array (0 to 255) of std_logic_vector(3 downto 0);
 	signal pal_r			: array_256x4 := (others => (others => '0'));
 	signal pal_g			: array_256x4 := (others => (others => '0'));
@@ -125,29 +123,26 @@ begin
 
 	-- chip 8D page 8
 	s_9c00_rd_n <= ( I_CS_9C00_n or I_MERD_n or (    I_AB(0)) );
-	s_9c00_wr_n <= ( I_CS_9C00_n or I_MEWR_n or (    I_AB(0)) );
 	s_9c01_rd_n <= ( I_CS_9C00_n or I_MERD_n or (not I_AB(0)) );
-	s_9c01_wr_n <= ( I_CS_9C00_n or I_MEWR_n or (not I_AB(0)) );
 
 	-- these are the RGB color palette RAMs at base address 9C00
 	-- even addresses access red bits 0-3 and green bits 4-7
 	-- odd addresses access blue bits 0-3, bits 4-7 unused
 
-	rg_pal : process(s_9c00_wr_n)
+	rgb_pal : process(I_CLK_6M_EN)
 	begin
-		if rising_edge(s_9c00_wr_n) then
-			-- chip 6A page 8
-			pal_r(conv_integer(s_color_addr)) <= I_DB(3 downto 0);
-			-- chip 6B page 8
-			pal_g(conv_integer(s_color_addr)) <= I_DB(7 downto 4);
-		end if;
-	end process;
-
-	b_pal : process(s_9c01_wr_n)
-	begin
-		if rising_edge(s_9c01_wr_n) then
-			-- chip 6C page 8
-			pal_b(conv_integer(s_color_addr)) <= I_DB(3 downto 0);
+		if falling_edge(I_CLK_6M_EN) then
+			if I_CS_9C00_n = '0' and I_MEWR_n = '0' then
+				if I_AB(0) = '0' then
+					-- chip 6A page 8
+					pal_r(conv_integer(s_color_addr)) <= I_DB(3 downto 0);
+					-- chip 6B page 8
+					pal_g(conv_integer(s_color_addr)) <= I_DB(7 downto 4);
+				else
+					-- chip 6C page 8
+					pal_b(conv_integer(s_color_addr)) <= I_DB(3 downto 0);
+				end if;
+			end if;
 		end if;
 	end process;
 

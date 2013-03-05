@@ -18,9 +18,9 @@ REM ed1746c15cdb04fae888601d940183d5c7702282 *14_j07b.bin
 REM 20c64593ab9fcb04cefbce0cd5d17ce3ff26441b *15_l07b.bin
 REM de71bcd67f97d05527f2504fc8430be333fb9ec2 *16_m07b.bin
 
-set rom_path_src=..\roms\bombjack
-set rom_path=..\build
-set romgen_path=..\romgen_source
+set rom_path_src=..\..\..\..\roms\bombjack
+set rom_path=..\..\..\..\build
+set romgen_path=..\..\..\..\romgen_source
 
 mkdir %rom_path%
 REM generate RAMB structures for larger ROMS

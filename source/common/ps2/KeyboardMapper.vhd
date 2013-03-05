@@ -33,8 +33,8 @@ architecture Behavioral of KeyboardMapper is
 	signal CapsLock   : STD_LOGIC;
 	signal NumLock    : STD_LOGIC;
 	signal ScrollLock : STD_LOGIC;
-	signal PauseON    : STD_LOGIC;
-	signal i          : natural range 0 to 7;
+--	signal PauseON    : STD_LOGIC;
+--	signal i          : natural range 0 to 7;
 
 begin
 
@@ -44,8 +44,8 @@ begin
 			CapsLock <= '0';
 			NumLock <= '0';
 			ScrollLock <= '0';
-			PauseON <= '0';
-			i <= 0;
+--			PauseON <= '0';
+--			i <= 0;
 			Send <= '0';
 			Command <= (others => '0');
 			CodeReady <= '0';

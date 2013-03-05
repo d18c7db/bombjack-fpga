@@ -1,5 +1,5 @@
 @echo off
-cd ..\..
+cd ..\..\..\..\..
 papilio-prog.exe -r
 papilio-prog.exe -c
 

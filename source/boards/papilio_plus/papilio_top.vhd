@@ -38,7 +38,7 @@ entity PAPILIO_TOP is
 		FLASH_SO		: in		std_logic := '0';						-- Serial input from FLASH chip SO pin
 
 		-- SRAM
-		SRAM_A		: out		std_logic_vector(18 downto 0);	-- SRAM address bus
+		SRAM_A		: out		std_logic_vector(17 downto 0);	-- SRAM address bus
 		SRAM_D		: inout	std_logic_vector(15 downto 0);	-- SRAM data bus
 		SRAM_nCS		: out		std_logic;								-- SRAM chip select active low
 		SRAM_nWE		: out		std_logic;								-- SRAM write enable active low
@@ -68,7 +68,7 @@ end PAPILIO_TOP;
 
 architecture RTL of PAPILIO_TOP is
 	-- bootstrap control of SRAM, these signals connect to SRAM when bootstrap_done = '0'
-	signal bs_A					: std_logic_vector(18 downto 0) := (others => '0');
+	signal bs_A					: std_logic_vector(17 downto 0) := (others => '0');
 	signal bs_Dout				: std_logic_vector( 7 downto 0) := (others => '0');
 	signal bs_nCS				: std_logic := '1';
 	signal bs_nWE				: std_logic := '1';
@@ -77,22 +77,22 @@ architecture RTL of PAPILIO_TOP is
 	signal bootstrap_done	: std_logic := '0';	-- low when FLASH is being copied to SRAM, can be used by user as active low reset
 
 	-- ROM selectors in external RAM space
---	constant sel_3H			: std_logic_vector( 5 downto 0) := "00" & x"0"; -- audio CPU rom
-	constant sel_4P			: std_logic_vector( 5 downto 0) := "00" & x"1"; -- graphics
-	constant sel_8E			: std_logic_vector( 5 downto 0) := "00" & x"2"; -- chars 0
-	constant sel_8H			: std_logic_vector( 5 downto 0) := "00" & x"3"; -- chars 1
-	constant sel_8K			: std_logic_vector( 5 downto 0) := "00" & x"4"; -- chars 2
-	constant sel_8L			: std_logic_vector( 5 downto 0) := "00" & x"5"; -- bg tiles 0
-	constant sel_8N			: std_logic_vector( 5 downto 0) := "00" & x"6"; -- bg tiles 1
-	constant sel_8R			: std_logic_vector( 5 downto 0) := "00" & x"7"; -- bg tiles 2
---	constant sel_1J			: std_logic_vector( 5 downto 0) := "00" & x"8"; -- main CPU prog rom 0
---	constant sel_1L			: std_logic_vector( 5 downto 0) := "00" & x"9"; -- main CPU prog rom 1
---	constant sel_1M			: std_logic_vector( 5 downto 0) := "00" & x"A"; -- main CPU prog rom 2
---	constant sel_1N			: std_logic_vector( 5 downto 0) := "00" & x"B"; -- main CPU prog rom 3
---	constant sel_1R			: std_logic_vector( 5 downto 0) := "00" & x"C"; -- main CPU prog rom 4
-	constant sel_7J			: std_logic_vector( 5 downto 0) := "00" & x"D"; -- sprites 0
-	constant sel_7L			: std_logic_vector( 5 downto 0) := "00" & x"E"; -- sprites 1
-	constant sel_7M			: std_logic_vector( 5 downto 0) := "00" & x"F"; -- sprites 2
+--	constant sel_3H			: std_logic_vector( 3 downto 0) := x"0"; -- audio CPU rom
+	constant sel_4P			: std_logic_vector( 3 downto 0) := x"1"; -- graphics
+	constant sel_8E			: std_logic_vector( 3 downto 0) := x"2"; -- chars 0
+	constant sel_8H			: std_logic_vector( 3 downto 0) := x"3"; -- chars 1
+	constant sel_8K			: std_logic_vector( 3 downto 0) := x"4"; -- chars 2
+	constant sel_8L			: std_logic_vector( 3 downto 0) := x"5"; -- bg tiles 0
+	constant sel_8N			: std_logic_vector( 3 downto 0) := x"6"; -- bg tiles 1
+	constant sel_8R			: std_logic_vector( 3 downto 0) := x"7"; -- bg tiles 2
+--	constant sel_1J			: std_logic_vector( 3 downto 0) := x"8"; -- main CPU prog rom 0
+--	constant sel_1L			: std_logic_vector( 3 downto 0) := x"9"; -- main CPU prog rom 1
+--	constant sel_1M			: std_logic_vector( 3 downto 0) := x"A"; -- main CPU prog rom 2
+--	constant sel_1N			: std_logic_vector( 3 downto 0) := x"B"; -- main CPU prog rom 3
+--	constant sel_1R			: std_logic_vector( 3 downto 0) := x"C"; -- main CPU prog rom 4
+	constant sel_7J			: std_logic_vector( 3 downto 0) := x"D"; -- sprites 0
+	constant sel_7L			: std_logic_vector( 3 downto 0) := x"E"; -- sprites 1
+	constant sel_7M			: std_logic_vector( 3 downto 0) := x"F"; -- sprites 2
 
 	--
 	-- user signals
@@ -106,7 +106,7 @@ architecture RTL of PAPILIO_TOP is
 	signal VSync				: std_logic := '1';
 
 	-- user control of SRAM, these signals connect to SRAM when boostrap_busy = '0'
-	signal user_A				: std_logic_vector(18 downto 0) := (others => '0');
+	signal user_A				: std_logic_vector(16 downto 0) := (others => '0');
 	signal user_Din			: std_logic_vector( 7 downto 0) := (others => '0');
 --	signal user_Dout			: std_logic_vector( 7 downto 0) := (others => '0');
 	signal user_nCS			: std_logic := '1';
@@ -116,7 +116,6 @@ architecture RTL of PAPILIO_TOP is
 -- Bomb Jack signals
 	signal ext_reset			: std_logic := '0';
 	signal clk_4M_en			: std_logic := '0';
-	signal clk_4M_en_n		: std_logic := '0';
 	signal clk_6M_en			: std_logic := '0';
 	signal clk_12M				: std_logic := '0';
 	signal clk_48M				: std_logic := '0';
@@ -158,7 +157,8 @@ architecture RTL of PAPILIO_TOP is
 	signal cpu_rfsh_n			: std_logic := '0';
 	signal cpu_mreq_n			: std_logic := '0';
 	signal cpu_reset_n		: std_logic := '0';
-	signal RESETn				: std_logic := '1';
+	signal RESET				: std_logic := '1';
+
 	signal s_audio				: std_logic_vector( 7 downto 0) := (others => '0');
 
 	signal s_cmpblk_n			: std_logic := '1';
@@ -175,6 +175,26 @@ architecture RTL of PAPILIO_TOP is
 		p2_start, p2_coin, p2_jump, p2_down, p2_up, p2_left, p2_right : std_logic := '0';
 
 begin
+	-----------------------------------------------
+	-- DCM generates all the system clocks required
+	-----------------------------------------------
+	clockgen : entity work.CLOCKGEN
+	generic map (
+		C_CLKFX_DIVIDE   => 2,
+		C_CLKFX_MULTIPLY => 3,
+		C_CLKIN_PERIOD   => 31.25
+	)
+	port map(
+		I_CLK			=> CLK_IN,
+		I_RST			=> ext_reset,
+		O_CLK_4M		=> clk_4M_en,
+		O_CLK_6M		=> clk_6M_en,
+		O_CLK_12M	=> clk_12M,
+--		O_CLK_24M	=> open,
+--		O_CLK_32M	=> open,
+		O_CLK_48M	=> clk_48M
+	);
+
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 -- SRAM Bootstrap begins here
@@ -183,7 +203,7 @@ begin
 
 	-- SRAM muxer, allows access to physical SRAM by either bootstrap or user
 	SRAM_D	<= x"00" & bs_Dout	when bootstrap_done = '0' and bs_nWE = '0'	else (others => 'Z'); -- no need for user write
-	SRAM_A	<= bs_A					when bootstrap_done = '0'							else user_A;
+	SRAM_A	<= bs_A					when bootstrap_done = '0'							else '0' & user_A;
 	SRAM_nCS	<= bs_nCS				when bootstrap_done = '0'							else user_nCS;
 	SRAM_nWE	<= bs_nWE				when bootstrap_done = '0'							else user_nWE;
 	SRAM_nOE	<= bs_nOE				when bootstrap_done = '0'							else user_nOE;
@@ -225,28 +245,13 @@ begin
 	O_HSYNC		<= HSync;
 	O_VSYNC		<= VSync;
 
-	user_nCS		<= '0';					-- SRAM always selected
-	user_nOE		<= '0';					-- SRAM output enabled
-	user_nWE		<= '1';					-- SRAM write enable inactive (we use it as ROM)
+	user_nCS		<= '0';				-- SRAM always selected
+	user_nOE		<= '0';				-- SRAM output enabled
+	user_nWE		<= '1';				-- SRAM write enable inactive (we use it as ROM)
 
-	RESETn		<= bootstrap_done;	-- active low reset
+	RESET			<= not bootstrap_done;	-- active high reset (after boostrap has finished)
 
-	ext_reset	<= I_RESET;				-- active high reset
-
-	-----------------------------------------------
-	-- DCM generates all the system clocks required
-	-----------------------------------------------
-	clockgen : entity work.CLOCKGEN
-	port map(
-		I_CLK			=> CLK_IN,
-		I_RST			=> ext_reset,
-		O_CLK_4M		=> clk_4M_en,
-		O_CLK_6M		=> clk_6M_en,
-		O_CLK_12M	=> clk_12M,
---		O_CLK_24M	=> open,
---		O_CLK_32M	=> open,
-		O_CLK_48M	=> clk_48M
-	);
+	ext_reset	<= I_RESET;				-- active high external reset
 
 	-----------------------------------------------------------------------------
 	-- Keyboard - active low buttons
@@ -329,12 +334,12 @@ begin
 		I_P2(1)				=> p2_left,					-- P2 left
 		I_P2(0)				=> p2_right,				-- P2 right
 
-		-- IRESET is used as a shift to alter button functions
+		-- system inputs
 		I_SYS(7 downto 4)	=> "1111",					-- unused
-		I_SYS(3)				=> p2_start,				-- P2 start (reset + down)
-		I_SYS(2)				=> p1_start,				-- P1 start (reset + up)
-		I_SYS(1)				=> p2_coin,					-- P2 coin  (reset + right)
-		I_SYS(0)				=> p1_coin,					-- P1 coin  (reset + left)
+		I_SYS(3)				=> p2_start,				-- P2 start
+		I_SYS(2)				=> p1_start,				-- P1 start
+		I_SYS(1)				=> p2_coin,					-- P2 coin
+		I_SYS(0)				=> p1_coin,					-- P1 coin
 
 		-- SW1 presets
 		I_SW1(7)				=> '1',						-- demo sounds 1=on, 0=off
@@ -378,7 +383,7 @@ begin
 		O_ROM_8RNL_ENA		=> o_rom_8RNL_ena,
 
 		-- Active high reset
-		I_RESET				=> RESETn,
+		I_RESET				=> RESET,
 
 		-- Clocks
 		I_CLK_4M				=> clk_4M_en,
@@ -442,110 +447,10 @@ begin
 	dac : entity work.DAC
 	port map (
 		clk_i		=> clk_48M, -- the higher the clock the better
-		res_n_i	=> RESETn,
+		res_i		=> RESET,
 		dac_i		=> s_audio,
 		dac_o		=> s_dac_out
 	);
-
---	---------------------------------
---	-- page 4 schematic - sprite ROMS
---	---------------------------------
---	-- chip 7J page 4
---	ROM_7J : entity work.ROM_7J
---		port map (
---			CLK	=> clk_6M_en,
---			ENA	=> o_rom_7JLM_ena,
---			ADDR	=> o_rom_7JLM_addr,
---			DATA	=> i_rom_7JLM_data(23 downto 16)
---		);
---
---	-- chip 7L page 4
---	ROM_7L : entity work.ROM_7L
---		port map (
---			CLK	=> clk_6M_en,
---			ENA	=> o_rom_7JLM_ena,
---			ADDR	=> o_rom_7JLM_addr,
---			DATA	=> i_rom_7JLM_data(15 downto  8)
---		);
---
---	-- chip 7M page 4
---	ROM_7M : entity work.ROM_7M
---		port map (
---			CLK	=> clk_6M_en,
---			ENA	=> o_rom_7JLM_ena,
---			ADDR	=> o_rom_7JLM_addr,
---			DATA	=> i_rom_7JLM_data( 7 downto  0)
---		);
---
---	----------------------------------------------
---	-- page 6 schematic - character generator ROMs
---	----------------------------------------------
---	-- chip 8K page 6
---	ROM_8K : entity work.ROM_8K
---		port map (
---			CLK	=> clk_6M_en,
---			ENA	=> o_rom_8KHE_ena,
---			ADDR	=> o_rom_8KHE_addr(11 downto 0),
---			DATA	=> i_rom_8KHE_data(23 downto 16)
---		);
---
---	-- chip 8H page 6
---	ROM_8H : entity work.ROM_8H
---		port map (
---			CLK	=> clk_6M_en,
---			ENA	=> o_rom_8KHE_ena,
---			ADDR	=> o_rom_8KHE_addr(11 downto 0),
---			DATA	=> i_rom_8KHE_data(15 downto  8)
---		);
---
---	-- chip 8E page 6
---	ROM_8E : entity work.ROM_8E
---		port map (
---			CLK	=> clk_6M_en,
---			ENA	=> o_rom_8KHE_ena,
---			ADDR	=> o_rom_8KHE_addr(11 downto 0),
---			DATA	=> i_rom_8KHE_data( 7 downto  0)
---		);
---
---	-------------------------------------------
---	-- page 7 schematic - background tiles ROMs
---	-------------------------------------------
---	-- chip 4P page 7
---	ROM_4P : entity work.ROM_4P
---		port map (
---			CLK	=> clk_6M_en,
---			ENA	=> o_rom_4P_ena,
---			ADDR	=> o_rom_4P_addr(11 downto 0),
---			DATA	=> i_rom_4P_data
---		);
---
---	-- chip 8R page 7
---	ROM_8R : entity work.ROM_8R
---		port map (
---			CLK	=> clk_6M_en,
---			ENA   => o_rom_8RNL_ena,
---			ADDR	=> o_rom_8RNL_addr,
---			DATA  => i_rom_8RNL_data(23 downto 16)
---		);
---
---	-- chip 8N page 7
---	ROM_8N : entity work.ROM_8N
---		port map (
---			CLK	=> clk_6M_en,
---			ENA   => o_rom_8RNL_ena,
---			ADDR	=> o_rom_8RNL_addr,
---			DATA  => i_rom_8RNL_data(15 downto  8)
---		);
---
---	-- chip 8L page 7
---	ROM_8L : entity work.ROM_8L
---		port map (
---			CLK	=> clk_6M_en,
---			ENA   => o_rom_8RNL_ena,
---			ADDR	=> o_rom_8RNL_addr,
---			DATA  => i_rom_8RNL_data( 7 downto  0)
---		);
-
 
 	-- The following state machine implements all the 10 separate video ROMs (4P, 7J, 7L, 7M, 8K, 8H, 8E, 8R, 8N, 8L)
 	-- by reading the external SRAM on a 48Mhz clock and presenting the data just in time to the video circuitry which

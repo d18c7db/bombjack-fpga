@@ -55,53 +55,69 @@ architecture behavior of bj_tb is
 
     -- Component Declaration for the Unit Under Test (UUT)
     component PAPILIO_TOP
-    port(
-         FLASH_CS    : out std_logic;
-         FLASH_SI    : out std_logic;
-         FLASH_SO    : in  std_logic := '0';
-         FLASH_CK    : out std_logic;
-			--
-         SRAM_A		: out	std_logic_vector(17 downto 0);
-         SRAM_D		: inout	std_logic_vector(15 downto 0);
-         SRAM_nCS		: out	std_logic;
-         SRAM_nWE		: out	std_logic;
-         SRAM_nOE		: out	std_logic;
-         SRAM_nBE		: out	std_logic;
-			--
-			O_VIDEO_R	: out		std_logic_vector(3 downto 0);
-			O_VIDEO_G	: out		std_logic_vector(3 downto 0);
-			O_VIDEO_B	: out		std_logic_vector(3 downto 0);
-			O_HSYNC		: out		std_logic;
-			O_VSYNC		: out		std_logic;
-			--
-         O_AUDIO_L	: out	std_logic;
-         O_AUDIO_R	: out	std_logic;
-			--
-			-- Active high external buttons
-			I_SW			: in		std_logic_vector(3 downto 0);		-- input switches
-			I_RESET		: in		std_logic;								-- push button (not used as reset here)
+	port(
+		I_RESET		: in		std_logic;								-- active high reset
 
-         CLK_IN      : in  std_logic := '0'
-        );
-    end component;
+		-- FLASH
+		FLASH_CS		: out		std_logic;								-- Active low FLASH chip select
+		FLASH_SI		: out		std_logic;								-- Serial output to FLASH chip SI pin
+		FLASH_CK		: out		std_logic;								-- FLASH clock
+		FLASH_SO		: in		std_logic := '0';						-- Serial input from FLASH chip SO pin
 
-   --Inputs
-   signal clock    : std_logic := '0';
-   signal FLASH_SO : std_logic := '1';
-   signal CLK_IN   : std_logic := '0';
-   signal RESET    : std_logic := '0';
+		-- SRAM
+		SRAM_A		: out		std_logic_vector(17 downto 0);	-- SRAM address bus
+		SRAM_D		: inout	std_logic_vector(15 downto 0);	-- SRAM data bus
+		SRAM_nCS		: out		std_logic;								-- SRAM chip select active low
+		SRAM_nWE		: out		std_logic;								-- SRAM write enable active low
+		SRAM_nOE		: out		std_logic;								-- SRAM output enable active low
+		SRAM_nBE		: out		std_logic;								-- SRAM byte enables active low
 
- 	--Outputs
-   signal FLASH_CS : std_logic := '0';
-   signal FLASH_SI : std_logic := '0';
-   signal FLASH_CK : std_logic := '0';
+		-- VGA monitor output
+		O_VIDEO_R	: out		std_logic_vector(3 downto 0);
+		O_VIDEO_G	: out		std_logic_vector(3 downto 0);
+		O_VIDEO_B	: out		std_logic_vector(3 downto 0);
+		O_HSYNC		: out		std_logic;
+		O_VSYNC		: out		std_logic;
 
-   signal SRAM_nCS : std_logic := '0';
-   signal SRAM_nWE : std_logic := '0';
-   signal SRAM_nOE : std_logic := '0';
-   signal SRAM_nBE : std_logic := '0';
-   signal SRAM_A : std_logic_vector(17 downto 0) := (others => '0');
-   signal SRAM_D : std_logic_vector(15 downto 0) := (others => '0');
+		-- Sound out
+		O_AUDIO_L	: out		std_logic;
+		O_AUDIO_R	: out		std_logic;
+
+		-- Active high external buttons
+		PS2CLK1		: inout	std_logic;
+		PS2DAT1		: inout	std_logic;
+
+		-- 32MHz clock
+		CLK_IN		: in		std_logic := '0'						-- System clock 32Mhz
+
+	);
+end component;
+	signal I_RESET		: std_logic := '0';
+	signal CLK_IN		: std_logic := '0';
+	signal FLASH_SO	: std_logic := '0';
+
+	signal FLASH_CS	: std_logic := '0';
+	signal FLASH_SI	: std_logic := '0';
+	signal FLASH_CK	: std_logic := '0';
+
+	signal SRAM_A		: std_logic_vector(17 downto 0) := (others => '0');
+	signal SRAM_D		: std_logic_vector(15 downto 0) := (others => '0');
+	signal SRAM_nCS	: std_logic := '0';
+	signal SRAM_nWE	: std_logic := '0';
+	signal SRAM_nOE	: std_logic := '0';
+	signal SRAM_nBE	: std_logic := '0';
+
+	signal O_VIDEO_R	: std_logic_vector(3 downto 0);
+	signal O_VIDEO_G	: std_logic_vector(3 downto 0);
+	signal O_VIDEO_B	: std_logic_vector(3 downto 0);
+	signal O_HSYNC		: std_logic := '0';
+	signal O_VSYNC		: std_logic := '0';
+
+	signal O_AUDIO_L	: std_logic := '0';
+	signal O_AUDIO_R	: std_logic := '0';
+
+	signal PS2CLK1		: std_logic := '0';
+	signal PS2DAT1		: std_logic := '0';
 
 	file stimulus: TEXT open read_mode is stim_file;
 	signal counter : std_logic_vector(5 downto 0) := (others => '0');
@@ -119,42 +135,43 @@ begin
 
 	-- Instantiate the unit under test (uut)
 	uut: PAPILIO_TOP port map (
-		FLASH_CS => FLASH_CS,
-		FLASH_SI => FLASH_SI,
-		FLASH_SO => FLASH_SO,
-		FLASH_CK => FLASH_CK,
-		SRAM_A	 => SRAM_A,
-		SRAM_D	 => SRAM_D,
-		SRAM_nCS => SRAM_nCS,
-		SRAM_nWE => SRAM_nWE,
-		SRAM_nOE => SRAM_nOE,
-		SRAM_nBE => SRAM_nBE,
-		O_VIDEO_R	=> open,
-		O_VIDEO_G	=> open,
-		O_VIDEO_B	=> open,
-		O_HSYNC		=> open,
-		O_VSYNC		=> open,
-		O_AUDIO_L	=> open,
-		O_AUDIO_R	=> open,
+		I_RESET	 =>   I_RESET,
 
-		I_RESET		=> '0',
-		I_SW(0)		=> RESET,
-		I_SW(1)		=> RESET,
-		I_SW(2)		=> RESET,
-		I_SW(3)		=> RESET,
+		FLASH_CS	 =>   FLASH_CS,
+		FLASH_SI	 =>   FLASH_SI,
+		FLASH_CK	 =>   FLASH_CK,
+		FLASH_SO	 =>   FLASH_SO,
 
-		CLK_IN   => CLK_IN
-  );
+		SRAM_A	 =>   SRAM_A,
+		SRAM_D	 =>   SRAM_D,
+		SRAM_nCS	 =>   SRAM_nCS,
+		SRAM_nWE	 =>   SRAM_nWE,
+		SRAM_nOE	 =>   SRAM_nOE,
+		SRAM_nBE	 =>   SRAM_nBE,
 
-	CLK_IN <= clock;
-   -- Clock process definitions
-   clock_process :process
-   begin
-		clock <= '0';
+		O_VIDEO_R =>   O_VIDEO_R,
+		O_VIDEO_G =>   O_VIDEO_G,
+		O_VIDEO_B =>   O_VIDEO_B,
+		O_HSYNC	 =>   O_HSYNC,
+		O_VSYNC	 =>   O_VSYNC,
+
+		O_AUDIO_L =>   O_AUDIO_L,
+		O_AUDIO_R =>   O_AUDIO_R,
+
+		PS2CLK1	 =>   PS2CLK1,
+		PS2DAT1	 =>   PS2DAT1,
+
+		CLK_IN	 =>   CLK_IN
+	);
+
+	-- Clock process definitions
+	clock_process :process
+	begin
+		CLK_IN <= '0';
 		wait for clock_period/2;
-		clock <= '1';
+		CLK_IN <= '1';
 		wait for clock_period/2;
-   end process;
+	end process;
 
 	process(FLASH_CS, FLASH_CK)
 	begin
@@ -189,10 +206,10 @@ begin
 
 	main : process
 	begin
-		RESET <= '1';
-		wait for 3*clock_period;
-		RESET <= '0';
+		I_RESET <= '1';
+		wait for 16*clock_period;
+		I_RESET <= '0';
 		wait;
-   end process;
+	end process;
 
 end;

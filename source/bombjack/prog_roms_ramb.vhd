@@ -17,9 +17,7 @@ library ieee;
 
 entity PROG_ROMS is
 	port (
---		I_CLK_12M   : in  std_logic;
-		I_CLK_4M_EN : in  std_logic;
---		I_OE_n      : in  std_logic;
+		I_CLK       : in  std_logic;
 		I_ROM_SEL   : in  std_logic_vector( 4 downto 0);
 		I_ADDR      : in  std_logic_vector(12 downto 0);
 		--
@@ -37,7 +35,7 @@ begin
 
 	ROM_1J : entity work.ROM_1J
 	port map(
-		CLK        => I_CLK_4M_EN,
+		CLK        => I_CLK,
 		ENA        => '1',
 		ADDR       => I_ADDR,
 		DATA       => ROMD_1J
@@ -45,7 +43,7 @@ begin
 
 	ROM_1L : entity work.ROM_1L
 	port map(
-		CLK        => I_CLK_4M_EN,
+		CLK        => I_CLK,
 		ENA        => '1',
 		ADDR       => I_ADDR,
 		DATA       => ROMD_1L
@@ -53,7 +51,7 @@ begin
 
 	ROM_1M : entity work.ROM_1M
 	port map(
-		CLK        => I_CLK_4M_EN,
+		CLK        => I_CLK,
 		ENA        => '1',
 		ADDR       => I_ADDR,
 		DATA       => ROMD_1M
@@ -61,7 +59,7 @@ begin
 
 	ROM_1N : entity work.ROM_1N
 	port map(
-		CLK        => I_CLK_4M_EN,
+		CLK        => I_CLK,
 		ENA        => '1',
 		ADDR       => I_ADDR,
 		DATA       => ROMD_1N
@@ -69,7 +67,7 @@ begin
 
 	ROM_1R : entity work.ROM_1R
 	port map(
-		CLK        => I_CLK_4M_EN,
+		CLK        => I_CLK,
 		ENA        => '1',
 		ADDR       => I_ADDR,
 		DATA       => ROMD_1R

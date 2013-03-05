@@ -78,7 +78,7 @@ entity BOMB_JACK is
 		O_ROM_8RNL_ENA		: out std_logic := '1';
 
 		-- Active high external buttons
-		I_RESET				: in		std_logic;								-- push button (not used as reset here)
+		I_RESET				: in		std_logic;								-- push button
 
 		-- Clocks
 		I_CLK_4M				: in		std_logic := '0';
@@ -116,7 +116,6 @@ architecture RTL of BOMB_JACK is
 
 -- Bomb Jack signals
 	signal clk_4M_en			: std_logic := '0';
-	signal clk_4M_en_n		: std_logic := '0';
 	signal clk_6M_en			: std_logic := '0';
 	signal clk_12M				: std_logic := '0';
 	signal s_flip				: std_logic := '0';
@@ -261,7 +260,7 @@ begin
 	clk_6M_en			<= I_CLK_6M;
 	clk_12M				<= I_CLK_12M;
 
-	RESETn				<= I_RESET;		-- active low reset
+	RESETn				<= not I_RESET;		-- active low reset
 
 	----------------------------------------------------------------------------
 	-- concatenate some signals so we can pass them to modules as a logic vector
@@ -285,8 +284,6 @@ begin
 		io_data			when (s_merd_n = '0') and (s_cs_b000_n = '0')	else -- chips 3N3, 3N11, 3P page 2
 		(others => '0');
 
-	clk_4M_en_n <= not clk_4M_en;
-
 	-- chip 4L6 page 1
 	cpu_reset_n <= RESETn and (not wd_ctr(3));
 
@@ -307,13 +304,21 @@ begin
 	s_mewr_n <= cpu_mreq_n or cpu_wr_n;
 
 	-- chip 1C12 page 1
-	s_wait <= not (s_ram2_n or s_sw_n or s_hbl);
+	process(clk_12M)
+	begin
+		if rising_edge(clk_12M) then
+			-- only let this change when CPU not enabled
+			if (clk_4M_en = '0') then
+				s_wait <= not (s_ram2_n or s_sw_n or s_hbl);
+			end if;
+		end if;
+	end process;
 
 	-- chip 4L3 page 1
 	s_csen_n <= s_wait and s_7P5;
 
-	-- chip 6P10 page 1
-	s_wait_n <= not (s_wait or s_7P9);
+	-- chip 6P10 page 1 (deviation from schematic to cleanup the wait pulse by taking s_7P5 into account as well)
+	s_wait_n <= not (s_wait or s_7P9 or s_7P5);
 
 	-- chip 5P5 page 1
 	U5P5 : process(s_vblank, s_nmion)
@@ -326,26 +331,30 @@ begin
 	end process;
 
 	-- chip 7P page 1
-	U7P5 : process(clk_4M_en, s_vblank)
+	U7P5 : process(clk_12M, s_vblank)
 	begin
 		if s_vblank = '1' then
 			s_7P5 <= '0';
-		elsif rising_edge(clk_4M_en) then
-			s_7P5 <= s_wait;
+		elsif rising_edge(clk_12M) then
+			if (clk_4M_en = '1') then
+				s_7P5 <= s_wait;
+			end if;
 		end if;
 	end process;
 
-	U7P9 : process(clk_4M_en)
+	U7P9 : process(clk_12M)
 	begin
-		if rising_edge(clk_4M_en) then
-			s_7P9 <= s_7P5;
+		if rising_edge(clk_12M) then
+			if (clk_4M_en = '1') then
+				s_7P9 <= s_7P5;
+			end if;
 		end if;
 	end process;
 
 	-- chips 1J, 1L, 1M, 1N, 1R page 1
 	prog_roms : entity work.PROG_ROMS
 	port map (
-		I_CLK_4M_EN	=> clk_4M_en_n,
+		I_CLK			=> clk_12M,
 		I_ROM_SEL	=> rom_sel,
 		I_ADDR		=> cpu_addr(12 downto 0),
 		O_DATA		=> rom_data
@@ -366,7 +375,7 @@ begin
 		do				=> ram0_data,
 		dop			=> open,
 		addr			=> cpu_addr(10 downto 0),
-		clk			=> clk_4M_en_n,
+		clk			=> clk_12M,
 		di				=> cpu_data_out,
 		dip			=> "0",
 		en				=> s_wram0,
@@ -381,7 +390,7 @@ begin
 		do				=> ram1_data,
 		dop			=> open,
 		addr			=> cpu_addr(10 downto 0),
-		clk			=> clk_4M_en_n,
+		clk			=> clk_12M,
 		di				=> cpu_data_out,
 		dip			=> "0",
 		en				=> s_wram1,
@@ -428,8 +437,8 @@ begin
 		NMI_n			=> s_nmi_n,
 		DI				=> cpu_data_in,
 		RESET_n		=> cpu_reset_n,
-		CLK_n			=> clk_4M_en,
-		CLKEN			=> '1',
+		CLK_n			=> clk_12M,
+		CLKEN			=> clk_4M_en,
 		INT_n			=> '1',  -- unused
 		BUSRQ_n		=> '1',  -- unused
 		-- outputs
@@ -538,6 +547,7 @@ begin
 	p4 : entity work.sprite_gen
 	port map (
 		I_CLK_6M_EN			=> clk_6M_en,
+		I_CLK_12M			=> clk_12M,
 		I_CS_9800_n			=> s_cs_9800_n,
 		I_MEWR_n				=> s_mewr_n,
 		I_MDL_n				=> s_mdl_n,
@@ -560,7 +570,7 @@ begin
 		I_DB					=> cpu_data_out,
 		I_ROM_7JLM_DATA	=> I_ROM_7JLM_DATA,
 		--
---		O_ROM_7JLM_ENA		=> O_ROM_7JLM_ENA,
+		O_ROM_7JLM_ENA		=> O_ROM_7JLM_ENA,
 		O_ROM_7JLM_ADDR	=> O_ROM_7JLM_ADDR,
 		O_MHFLIP				=> s_mhflip,
 		O_MC					=> s_mc,

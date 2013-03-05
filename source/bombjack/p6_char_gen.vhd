@@ -50,7 +50,6 @@ architecture RTL of char_gen is
 
 -- Page 6
 	signal s_9000_rd_n		: std_logic := '0';
-	signal s_CLK_12M_n		: std_logic := '0';
 	signal s_4M12				: std_logic := '0';
 	signal s_6N8				: std_logic := '0';
 	signal s_6P11				: std_logic := '0';
@@ -70,7 +69,6 @@ architecture RTL of char_gen is
 begin
 
 	O_DB <= s_6LM_data; -- when s_6LM_wr = '1' else (others => 'Z');
-	s_CLK_12M_n <= not I_CLK_12M;
 
 	-- chips 3L, 2R6, 8C6, 6N11 page 6 moved to top.vhd output data bus mux
 
@@ -86,7 +84,7 @@ begin
 		do						=> s_6LM_data,
 		dop					=> open,
 		addr					=> s_6LM_addr,
-		clk					=> s_CLK_12M_n, -- due to T80 early read in T3 state, this 2x clock is required here
+		clk					=> I_CLK_12M, -- due to T80 early read in T3 state, this 2x clock is required here
 		di						=> I_DB,
 		dip					=> "0",
 		en						=> '1',

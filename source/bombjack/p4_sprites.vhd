@@ -25,7 +25,7 @@ library unisim;
 entity sprite_gen is
 	port (
 		I_CLK_6M_EN			: in  std_logic;
---		I_CLK_12M			: in  std_logic;
+		I_CLK_12M			: in  std_logic;
 		I_CS_9800_n			: in  std_logic;
 		I_MEWR_n				: in  std_logic;
 		I_MDL_N				: in  std_logic;
@@ -108,7 +108,7 @@ begin
 		dop					=> open,
 		addr(10 downto 7)	=> "0000",
 		addr( 6 downto 0)	=> s_3EF_addr,
-		clk					=> I_CLK_6M_EN,
+		clk					=> I_CLK_12M,
 		di						=> I_DB,
 		dip					=> "0",
 		en						=> '1',
