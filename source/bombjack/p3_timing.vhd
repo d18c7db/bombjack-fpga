@@ -113,7 +113,6 @@ architecture RTL of timing is
 	signal s_9a00				: std_logic_vector( 3 downto 0) := (others => '0');
 	signal s_9a01				: std_logic_vector( 3 downto 0) := (others => '0');
 
-	signal s_7T8				: std_logic := '0';
 	signal s_9a00_wr_n		: std_logic := '0';
 	signal s_9a01_wr_n		: std_logic := '0';
 	signal s_6T4				: std_logic := '0';

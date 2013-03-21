@@ -31,7 +31,7 @@ CONFIG PROHIBIT="U3" ; # INIT_B high via pullup
 NET "CLK_IN"          LOC = "H17"  | IOSTANDARD = LVTTL | PERIOD=20ns ;
 NET "CLK_IN" TNM_NET = "CLK_IN" ;
 #NET "CLKIN2"         LOC = "V10"  | IOSTANDARD = LVTTL; # auxiliary clock input (N/C)
-NET "I_RESET" CLOCK_DEDICATED_ROUTE = FALSE;
+
 ############################################################################
 ## Clock constraints                                                        
 ############################################################################
@@ -84,14 +84,14 @@ TIMESPEC "TS_CLK_IN" = PERIOD "CLK_IN" 20 ns HIGH 50 %;
 #NET "USB_SIWUA"      LOC = "C5"   | IOSTANDARD = LVTTL | SLEW = FAST | DRIVE = 8 ; # BCBUS4
 
 # TMDS signals
-#NET "TMDS_P<0>"      LOC = "T6"   | IOSTANDARD = TMDS_33 ; # Blue
-#NET "TMDS_N<0>"      LOC = "V6"   | IOSTANDARD = TMDS_33 ;
-#NET "TMDS_P<1>"      LOC = "U7"   | IOSTANDARD = TMDS_33 ; # Red
-#NET "TMDS_N<1>"      LOC = "V7"   | IOSTANDARD = TMDS_33 ;
-#NET "TMDS_P<2>"      LOC = "U8"   | IOSTANDARD = TMDS_33 ; # Green
-#NET "TMDS_N<2>"      LOC = "V8"   | IOSTANDARD = TMDS_33 ;
-#NET "TMDS_P<3>"      LOC = "U5"   | IOSTANDARD = TMDS_33 ; # Clock
-#NET "TMDS_N<3>"      LOC = "V5"   | IOSTANDARD = TMDS_33 ;
+NET "TMDS_P<0>"      LOC = "T6"   | IOSTANDARD = TMDS_33 ; # Blue
+NET "TMDS_N<0>"      LOC = "V6"   | IOSTANDARD = TMDS_33 ;
+NET "TMDS_P<1>"      LOC = "U7"   | IOSTANDARD = TMDS_33 ; # Red
+NET "TMDS_N<1>"      LOC = "V7"   | IOSTANDARD = TMDS_33 ;
+NET "TMDS_P<2>"      LOC = "U8"   | IOSTANDARD = TMDS_33 ; # Green
+NET "TMDS_N<2>"      LOC = "V8"   | IOSTANDARD = TMDS_33 ;
+NET "TMDS_P<3>"      LOC = "U5"   | IOSTANDARD = TMDS_33 ; # Clock
+NET "TMDS_N<3>"      LOC = "V5"   | IOSTANDARD = TMDS_33 ;
 
 # EDID
 #NET "EDID_SDA"       LOC = "T9"   | IOSTANDARD = I2C ;
@@ -100,8 +100,8 @@ TIMESPEC "TS_CLK_IN" = PERIOD "CLK_IN" 20 ns HIGH 50 %;
 #NET "HDMI_DET"       LOC = "R8"   | IOSTANDARD = LVTTL ; # active low
 
 # Audio
-#NET "AUDIO_L"        LOC = "R7"   | IOSTANDARD = LVTTL | SLEW = SLOW | DRIVE = 8 ;
-#NET "AUDIO_R"        LOC = "T7"   | IOSTANDARD = LVTTL | SLEW = SLOW | DRIVE = 8 ;
+NET "O_AUDIO_L"      LOC = "R7"   | IOSTANDARD = LVTTL | SLEW = SLOW | DRIVE = 8 ;
+NET "O_AUDIO_R"      LOC = "T7"   | IOSTANDARD = LVTTL | SLEW = SLOW | DRIVE = 8 ;
 
 # SD-card SDIO interface
 #NET "SD_DAT<0>"      LOC = "B4"   | IOSTANDARD = SDIO | SLEW = FAST | DRIVE = 8 | PULLUP ;
@@ -125,7 +125,7 @@ TIMESPEC "TS_CLK_IN" = PERIOD "CLK_IN" 20 ns HIGH 50 %;
 #NET "LED<4>"         LOC = "A12"  | IOSTANDARD = LVTTL | SLEW = SLOW | DRIVE = 8 ; # active high red
 
 # Switch
-#NET "RESET"           LOC = "N14"  | IOSTANDARD = LVTTL | PULLDOWN ; # active high
+NET "I_RESET"        LOC = "N14"  | IOSTANDARD = LVTTL | PULLDOWN ; # active high
 
 # PMOD
 #NET "PMOD1_IO1"      LOC = "D9"   | IOSTANDARD = LVTTL | SLEW = SLOW | DRIVE = 8 ;
@@ -279,11 +279,11 @@ CONFIG PROHIBIT = P1,L3;
 # Papilio Arcade MegaWing specific pins
 
 # Wing 1 pod A
-NET "O_AUDIO_L"      LOC = "D18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_AUDIO_R"      LOC = "F18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_AUDIO_L"      LOC = "D18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_AUDIO_R"      LOC = "F18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
 NET "PS2CLK1"        LOC = "H18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
 NET "PS2DAT1"        LOC = "H15"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "I_RESET"        LOC = "J16"  | IOSTANDARD=LVTTL | PULLDOWN            ; # active high
+#NET "I_RESET"        LOC = "J16"  | IOSTANDARD=LVTTL | PULLDOWN            ; # active high
 #NET "W1_AH10"        LOC = "K17"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
 #NET "W1_AH09"        LOC = "K15"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
 #NET "W1_AH08"        LOC = "L17"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
@@ -305,24 +305,24 @@ NET "I_RESET"        LOC = "J16"  | IOSTANDARD=LVTTL | PULLDOWN            ; # a
 #NET "I_SW<2>"        LOC = "N18"  | IOSTANDARD=LVTTL | PULLDOWN            ; # active high
 #NET "I_SW<1>"        LOC = "M18"  | IOSTANDARD=LVTTL | PULLDOWN            ; # active high
 #NET "I_SW<0>"        LOC = "L16"  | IOSTANDARD=LVTTL | PULLDOWN            ; # active high
-NET "O_VIDEO_G<3>"   LOC = "L18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_VIDEO_G<2>"   LOC = "K16"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_VIDEO_G<1>"   LOC = "K18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_VIDEO_G<0>"   LOC = "J18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_VIDEO_B<3>"   LOC = "H16"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_VIDEO_B<2>"   LOC = "G18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_VIDEO_B<1>"   LOC = "E18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_VIDEO_B<0>"   LOC = "C18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VIDEO_G<3>"   LOC = "L18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VIDEO_G<2>"   LOC = "K16"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VIDEO_G<1>"   LOC = "K18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VIDEO_G<0>"   LOC = "J18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VIDEO_B<3>"   LOC = "H16"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VIDEO_B<2>"   LOC = "G18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VIDEO_B<1>"   LOC = "E18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VIDEO_B<0>"   LOC = "C18"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
                    
 # Wing 2 pod C     
 #NET "PS2DAT2"        LOC = "F17"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
 #NET "PS2CLK2"        LOC = "F16"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_VSYNC"        LOC = "E16"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_HSYNC"        LOC = "G16"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_VIDEO_R<0>"   LOC = "F15"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_VIDEO_R<1>"   LOC = "G14"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_VIDEO_R<2>"   LOC = "F14"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
-NET "O_VIDEO_R<3>"   LOC = "H14"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VSYNC"        LOC = "E16"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_HSYNC"        LOC = "G16"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VIDEO_R<0>"   LOC = "F15"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VIDEO_R<1>"   LOC = "G14"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VIDEO_R<2>"   LOC = "F14"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
+#NET "O_VIDEO_R<3>"   LOC = "H14"  | IOSTANDARD=LVTTL | DRIVE=8 | SLEW=FAST ; #
 #NET "JS2_1"          LOC = "H13"  | IOSTANDARD=LVTTL | PULLDOWN            ; # active high
 #NET "JS2_6"          LOC = "J13"  | IOSTANDARD=LVTTL | PULLDOWN            ; # active high
 #NET "JS2_2"          LOC = "G13"  | IOSTANDARD=LVTTL | PULLDOWN            ; # active high

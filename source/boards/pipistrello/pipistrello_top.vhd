@@ -32,11 +32,15 @@ entity PIPISTRELLO_TOP is
 		I_RESET		: in		std_logic;								-- active high reset
 
 		-- VGA monitor output
-		O_VIDEO_R	: out   std_logic_vector(3 downto 0);
-		O_VIDEO_G	: out   std_logic_vector(3 downto 0);
-		O_VIDEO_B	: out   std_logic_vector(3 downto 0);
-		O_HSYNC		: out   std_logic;
-		O_VSYNC		: out   std_logic;
+--		O_VIDEO_R	: out   std_logic_vector(3 downto 0);
+--		O_VIDEO_G	: out   std_logic_vector(3 downto 0);
+--		O_VIDEO_B	: out   std_logic_vector(3 downto 0);
+--		O_HSYNC		: out   std_logic;
+--		O_VSYNC		: out   std_logic;
+
+		-- HDMI monitor output
+		TMDS_P		: out   std_logic_vector(3 downto 0);
+		TMDS_N		: out   std_logic_vector(3 downto 0);
 
 		-- Sound out
 		O_AUDIO_L	: out   std_logic;
@@ -65,6 +69,7 @@ architecture RTL of PIPISTRELLO_TOP is
 	signal clk_4M_en			: std_logic := '0';
 	signal clk_6M_en			: std_logic := '0';
 	signal clk_12M				: std_logic := '0';
+	signal clk_24M				: std_logic := '0';
 	signal clk_48M				: std_logic := '0';
 
 	signal s_red				: std_logic_vector( 3 downto 0) := (others => '0');
@@ -91,11 +96,21 @@ architecture RTL of PIPISTRELLO_TOP is
 	signal s_audio				: std_logic_vector( 7 downto 0) := (others => '0');
 
 	signal s_cmpblk_n			: std_logic := '1';
+	signal s_cmpblk_x4_n		: std_logic := '1';
 	signal s_dac_out			: std_logic := '1';
 	signal s_hsync_n			: std_logic := '1';
 	signal s_vsync_n			: std_logic := '1';
 	signal ps2_codeready		: std_logic := '1';
 	signal ps2_scancode		: std_logic_vector( 9 downto 0) := (others => '0');
+
+   signal red_s				: std_logic := '0';
+   signal grn_s				: std_logic := '0';
+   signal blu_s				: std_logic := '0';
+
+   signal clk_dvi_p			: std_logic := '0';
+   signal clk_dvi_n			: std_logic := '0';
+   signal clk_s				: std_logic := '0';
+   signal s_blank				: std_logic := '0';
 
 	-- buttons
 	signal
@@ -117,7 +132,7 @@ begin
 		O_CLK_4M		=> clk_4M_en,
 		O_CLK_6M		=> clk_6M_en,
 		O_CLK_12M	=> clk_12M,
---		O_CLK_24M	=> open,
+		O_CLK_24M	=> clk_24M,
 --		O_CLK_32M	=> open,
 		O_CLK_48M	=> clk_48M
 	);
@@ -130,11 +145,12 @@ begin
 	O_AUDIO_L	<= s_dac_out;
 	O_AUDIO_R	<= s_dac_out;
 
-	O_VIDEO_R	<= VideoR;
-	O_VIDEO_G	<= VideoG;
-	O_VIDEO_B	<= VideoB;
-	O_HSYNC		<= HSync;
-	O_VSYNC		<= VSync;
+	-- uncomment for VGA output
+--	O_VIDEO_R	<= VideoR;
+--	O_VIDEO_G	<= VideoG;
+--	O_VIDEO_B	<= VideoB;
+--	O_HSYNC		<= HSync;
+--	O_VSYNC		<= VSync;
 
 	ext_reset	<= I_RESET;				-- active high reset
 
@@ -276,37 +292,10 @@ begin
 		I_CLK_12M			=> clk_12M
 	);
 
-	---------------------------------------------------------------
-	-- video scan doubler required to display video on VGA hardware
-	---------------------------------------------------------------
-
-	-- timing waveforms:
-	--  video _______________------//-----_______________--
-	--   sync -----_____-----------//----------_____-------
-	--             < B >< C ><     D     >< A >< B >< C >
-	--                                    <      F      >
-	--             <               E          >
-	--
-
-	-- input   6MHz pixel clock, 352x256, 15.625Khz horizontal, 59.18Hz vertical
-	-- Vertical           Horizontal
-	-- A =  16 lines      F =   48 clocks
-	-- B =   8 lines      C =   32 clocks
-	-- C =  16 lines      D =   48 clocks
-	-- D = 224 lines      E =  256 clocks
-	-- E = 264 lines      A =  384 clocks
-	-- F =  40 lines      B =  128 clocks
-
-	-- output 12MHz pixel clock, 768x528, 31.250Khz horizontal, 59.18Hz vertical
-	-- Vertical           Horizontal
-	-- A =  32 lines      F =   48 clocks
-	-- B =   2 lines      C =   46 clocks
-	-- C =  46 lines      D =   34 clocks
-	-- D = 448 lines      E =  256 clocks
-	-- E = 528 lines      A =  384 clocks
-	-- F =  80 lines      B =  128 clocks
-
-	scan_dbl : entity work.VGA_SCANDBL
+	-----------------------------------------------------------------
+	-- video scan converter required to display video on VGA hardware
+	-----------------------------------------------------------------
+	scan_conv : entity work.VGA_SCANCONV
 	port map (
 		I_VIDEO(15 downto 12)=> "0000",
 		I_VIDEO(11 downto 8) => s_red,
@@ -314,6 +303,7 @@ begin
 		I_VIDEO( 3 downto 0) => s_blu,
 		I_HSYNC					=> s_hsync_n,
 		I_VSYNC					=> s_vsync_n,
+		I_CMPBLK_N				=> s_cmpblk_n,
 		--
 		O_VIDEO(15 downto 12)=> dummy,
 		O_VIDEO(11 downto 8) => VideoR,
@@ -321,10 +311,51 @@ begin
 		O_VIDEO( 3 downto 0) => VideoB,
 		O_HSYNC					=> HSync,
 		O_VSYNC					=> VSync,
+		O_CMPBLK_N				=> s_cmpblk_x4_n,
 		--
 		CLK						=> clk_6M_en,
-		CLK_X2					=> clk_12M
+		CLK_X4					=> clk_24M
 	);
+
+	OBUFDS_clk : OBUFDS port map ( O => TMDS_P(3), OB => TMDS_N(3), I => clk_s );
+	OBUFDS_grn : OBUFDS port map ( O => TMDS_P(2), OB => TMDS_N(2), I => red_s );
+	OBUFDS_red : OBUFDS port map ( O => TMDS_P(1), OB => TMDS_N(1), I => grn_s );
+	OBUFDS_blu : OBUFDS port map ( O => TMDS_P(0), OB => TMDS_N(0), I => blu_s );
+
+	s_blank <= not s_cmpblk_x4_n;
+
+	inst_dcm : DCM_SP
+		generic map (
+			CLKFX_MULTIPLY => 12,
+			CLKFX_DIVIDE   => 5,
+			CLKIN_PERIOD   => 20.0
+		 )
+		port map (
+			CLKIN    => CLK_IN,
+			CLKFX    => clk_dvi_p,
+			CLKFX180 => clk_dvi_n
+		 );
+
+	inst_dvid: entity work.dvid
+	port map(
+      clk_p     => clk_dvi_p,
+      clk_n     => clk_dvi_n, 
+      clk_pixel => clk_24M,
+      red_p(  7 downto 4) => VideoR,
+      red_p(  3 downto 0) => x"0",
+      green_p(7 downto 4) => VideoG,
+      green_p(3 downto 0) => x"0",
+      blue_p( 7 downto 4) => VideoB,
+      blue_p( 3 downto 0) => x"0",
+      blank     => s_blank,
+      hsync     => HSync,
+      vsync     => VSync,
+      -- outputs to TMDS drivers
+      red_s     => red_s,
+      green_s   => grn_s,
+      blue_s    => blu_s,
+      clock_s   => clk_s
+   );
 
 	----------------------
 	-- 1 bit D/A converter
@@ -332,7 +363,7 @@ begin
 	dac : entity work.DAC
 	port map (
 		clk_i		=> clk_48M, -- the higher the clock the better
-		res_n_i	=> not ext_reset,
+		res_i		=> ext_reset,
 		dac_i		=> s_audio,
 		dac_o		=> s_dac_out
 	);
@@ -342,98 +373,98 @@ begin
 	---------------------------------
 	-- chip 7J page 4
 	ROM_7J : entity work.ROM_7J
-		port map (
-			CLK	=> clk_12M,
-			ENA	=> o_rom_7JLM_ena,
-			ADDR	=> o_rom_7JLM_addr,
-			DATA	=> i_rom_7JLM_data(23 downto 16)
-		);
+	port map (
+		CLK	=> clk_12M,
+		ENA	=> o_rom_7JLM_ena,
+		ADDR	=> o_rom_7JLM_addr,
+		DATA	=> i_rom_7JLM_data(23 downto 16)
+	);
 
 	-- chip 7L page 4
 	ROM_7L : entity work.ROM_7L
-		port map (
-			CLK	=> clk_12M,
-			ENA	=> o_rom_7JLM_ena,
-			ADDR	=> o_rom_7JLM_addr,
-			DATA	=> i_rom_7JLM_data(15 downto  8)
-		);
+	port map (
+		CLK	=> clk_12M,
+		ENA	=> o_rom_7JLM_ena,
+		ADDR	=> o_rom_7JLM_addr,
+		DATA	=> i_rom_7JLM_data(15 downto  8)
+	);
 
 	-- chip 7M page 4
 	ROM_7M : entity work.ROM_7M
-		port map (
-			CLK	=> clk_12M,
-			ENA	=> o_rom_7JLM_ena,
-			ADDR	=> o_rom_7JLM_addr,
-			DATA	=> i_rom_7JLM_data( 7 downto  0)
-		);
+	port map (
+		CLK	=> clk_12M,
+		ENA	=> o_rom_7JLM_ena,
+		ADDR	=> o_rom_7JLM_addr,
+		DATA	=> i_rom_7JLM_data( 7 downto  0)
+	);
 
 	----------------------------------------------
 	-- page 6 schematic - character generator ROMs
 	----------------------------------------------
 	-- chip 8K page 6
 	ROM_8K : entity work.ROM_8K
-		port map (
-			CLK	=> clk_12M,
-			ENA	=> o_rom_8KHE_ena,
-			ADDR	=> o_rom_8KHE_addr(11 downto 0),
-			DATA	=> i_rom_8KHE_data(23 downto 16)
-		);
+	port map (
+		CLK	=> clk_12M,
+		ENA	=> o_rom_8KHE_ena,
+		ADDR	=> o_rom_8KHE_addr(11 downto 0),
+		DATA	=> i_rom_8KHE_data(23 downto 16)
+	);
 
 	-- chip 8H page 6
 	ROM_8H : entity work.ROM_8H
-		port map (
-			CLK	=> clk_12M,
-			ENA	=> o_rom_8KHE_ena,
-			ADDR	=> o_rom_8KHE_addr(11 downto 0),
-			DATA	=> i_rom_8KHE_data(15 downto  8)
-		);
+	port map (
+		CLK	=> clk_12M,
+		ENA	=> o_rom_8KHE_ena,
+		ADDR	=> o_rom_8KHE_addr(11 downto 0),
+		DATA	=> i_rom_8KHE_data(15 downto  8)
+	);
 
 	-- chip 8E page 6
 	ROM_8E : entity work.ROM_8E
-		port map (
-			CLK	=> clk_12M,
-			ENA	=> o_rom_8KHE_ena,
-			ADDR	=> o_rom_8KHE_addr(11 downto 0),
-			DATA	=> i_rom_8KHE_data( 7 downto  0)
-		);
+	port map (
+		CLK	=> clk_12M,
+		ENA	=> o_rom_8KHE_ena,
+		ADDR	=> o_rom_8KHE_addr(11 downto 0),
+		DATA	=> i_rom_8KHE_data( 7 downto  0)
+	);
 
 	-------------------------------------------
 	-- page 7 schematic - background tiles ROMs
 	-------------------------------------------
 	-- chip 4P page 7
 	ROM_4P : entity work.ROM_4P
-		port map (
-			CLK	=> clk_12M,
-			ENA	=> o_rom_4P_ena,
-			ADDR	=> o_rom_4P_addr(11 downto 0),
-			DATA	=> i_rom_4P_data
-		);
+	port map (
+		CLK	=> clk_12M,
+		ENA	=> o_rom_4P_ena,
+		ADDR	=> o_rom_4P_addr(11 downto 0),
+		DATA	=> i_rom_4P_data
+	);
 
 	-- chip 8R page 7
 	ROM_8R : entity work.ROM_8R
-		port map (
-			CLK	=> clk_12M,
-			ENA   => o_rom_8RNL_ena,
-			ADDR	=> o_rom_8RNL_addr,
-			DATA  => i_rom_8RNL_data(23 downto 16)
-		);
+	port map (
+		CLK	=> clk_12M,
+		ENA   => o_rom_8RNL_ena,
+		ADDR	=> o_rom_8RNL_addr,
+		DATA  => i_rom_8RNL_data(23 downto 16)
+	);
 
 	-- chip 8N page 7
 	ROM_8N : entity work.ROM_8N
-		port map (
-			CLK	=> clk_12M,
-			ENA   => o_rom_8RNL_ena,
-			ADDR	=> o_rom_8RNL_addr,
-			DATA  => i_rom_8RNL_data(15 downto  8)
-		);
+	port map (
+		CLK	=> clk_12M,
+		ENA   => o_rom_8RNL_ena,
+		ADDR	=> o_rom_8RNL_addr,
+		DATA  => i_rom_8RNL_data(15 downto  8)
+	);
 
 	-- chip 8L page 7
 	ROM_8L : entity work.ROM_8L
-		port map (
-			CLK	=> clk_12M,
-			ENA   => o_rom_8RNL_ena,
-			ADDR	=> o_rom_8RNL_addr,
-			DATA  => i_rom_8RNL_data( 7 downto  0)
-		);
+	port map (
+		CLK	=> clk_12M,
+		ENA   => o_rom_8RNL_ena,
+		ADDR	=> o_rom_8RNL_addr,
+		DATA  => i_rom_8RNL_data( 7 downto  0)
+	);
 
 end RTL;

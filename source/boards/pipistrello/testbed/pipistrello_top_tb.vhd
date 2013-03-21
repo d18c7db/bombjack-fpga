@@ -48,17 +48,20 @@ architecture behavior of PIPISTRELLO_TB is
 	port(
 		I_RESET   : in     std_logic;
 		--
-		O_VIDEO_R : out    std_logic_vector( 3 downto 0);
-		O_VIDEO_G : out    std_logic_vector( 3 downto 0);
-		O_VIDEO_B : out    std_logic_vector( 3 downto 0);
-		O_HSYNC   : out    std_logic;
-		O_VSYNC   : out    std_logic;
+--		O_VIDEO_R : out    std_logic_vector( 3 downto 0);
+--		O_VIDEO_G : out    std_logic_vector( 3 downto 0);
+--		O_VIDEO_B : out    std_logic_vector( 3 downto 0);
+--		O_HSYNC   : out    std_logic;
+--		O_VSYNC   : out    std_logic;
+		-- HDMI monitor output
+		TMDS_P	: out   std_logic_vector(3 downto 0);
+		TMDS_N	: out   std_logic_vector(3 downto 0);
 		--
 		O_AUDIO_L : out    std_logic;
 		O_AUDIO_R : out    std_logic;
 		--
-		PS2CLK1		: inout	std_logic;
-		PS2DAT1		: inout	std_logic;
+		PS2CLK1	: inout	std_logic;
+		PS2DAT1	: inout	std_logic;
 		--
 		CLK_IN    : in     std_logic
 	);
@@ -72,13 +75,16 @@ architecture behavior of PIPISTRELLO_TB is
 	signal PS2DAT1   : std_logic;
 
 	--Outputs
-	signal O_VIDEO_R : std_logic_vector(3 downto 0);
-	signal O_VIDEO_G : std_logic_vector(3 downto 0);
-	signal O_VIDEO_B : std_logic_vector(3 downto 0);
-	signal O_HSYNC   : std_logic;
-	signal O_VSYNC   : std_logic;
+--	signal O_VIDEO_R : std_logic_vector(3 downto 0);
+--	signal O_VIDEO_G : std_logic_vector(3 downto 0);
+--	signal O_VIDEO_B : std_logic_vector(3 downto 0);
+--	signal O_HSYNC   : std_logic;
+--	signal O_VSYNC   : std_logic;
 	signal O_AUDIO_L : std_logic;
 	signal O_AUDIO_R : std_logic;
+
+	signal TMDS_P    : std_logic_vector(3 downto 0);
+	signal TMDS_N    : std_logic_vector(3 downto 0);
 
 	-- Clock period definitions
 	constant CLK_IN_period : time := 20 ns;
@@ -87,11 +93,13 @@ begin
 	-- Instantiate the Unit Under Test (UUT)
 	uut: PIPISTRELLO_TOP port map (
 		I_RESET   => I_RESET,
-		O_VIDEO_R => O_VIDEO_R,
-		O_VIDEO_G => O_VIDEO_G,
-		O_VIDEO_B => O_VIDEO_B,
-		O_HSYNC   => O_HSYNC,
-		O_VSYNC   => O_VSYNC,
+--		O_VIDEO_R => O_VIDEO_R,
+--		O_VIDEO_G => O_VIDEO_G,
+--		O_VIDEO_B => O_VIDEO_B,
+--		O_HSYNC   => O_HSYNC,
+--		O_VSYNC   => O_VSYNC,
+		TMDS_P    => TMDS_P,
+		TMDS_N    => TMDS_N,
 		O_AUDIO_L => O_AUDIO_L,
 		O_AUDIO_R => O_AUDIO_R,
 		PS2CLK1   => PS2CLK1,

@@ -118,6 +118,7 @@ architecture RTL of PAPILIO_TOP is
 	signal clk_4M_en			: std_logic := '0';
 	signal clk_6M_en			: std_logic := '0';
 	signal clk_12M				: std_logic := '0';
+	signal clk_24M				: std_logic := '0';
 	signal clk_48M				: std_logic := '0';
 
 	signal s_red				: std_logic_vector( 3 downto 0) := (others => '0');
@@ -164,8 +165,10 @@ architecture RTL of PAPILIO_TOP is
 	signal s_cmpblk_n			: std_logic := '1';
 	signal s_cmpblk_n_last	: std_logic := '1';
 	signal s_dac_out			: std_logic := '1';
+
 	signal s_hsync_n			: std_logic := '1';
 	signal s_vsync_n			: std_logic := '1';
+
 	signal ps2_codeready		: std_logic := '1';
 	signal ps2_scancode		: std_logic_vector( 9 downto 0) := (others => '0');
 
@@ -190,7 +193,7 @@ begin
 		O_CLK_4M		=> clk_4M_en,
 		O_CLK_6M		=> clk_6M_en,
 		O_CLK_12M	=> clk_12M,
---		O_CLK_24M	=> open,
+		O_CLK_24M	=> clk_24M,
 --		O_CLK_32M	=> open,
 		O_CLK_48M	=> clk_48M
 	);
@@ -394,34 +397,7 @@ begin
 	---------------------------------------------------------------
 	-- video scan doubler required to display video on VGA hardware
 	---------------------------------------------------------------
-
-	-- timing waveforms:
-	--  video _______________------//-----_______________--
-	--   sync -----_____-----------//----------_____-------
-	--             < B >< C ><     D     >< A >< B >< C >
-	--                                    <      F      >
-	--             <               E          >
-	--
-
-	-- input   6MHz pixel clock, 352x256, 15.625Khz horizontal, 59.18Hz vertical
-	-- Vertical           Horizontal
-	-- A =  16 lines      F =   48 clocks
-	-- B =   8 lines      C =   32 clocks
-	-- C =  16 lines      D =   48 clocks
-	-- D = 224 lines      E =  256 clocks
-	-- E = 264 lines      A =  384 clocks
-	-- F =  40 lines      B =  128 clocks
-
-	-- output 12MHz pixel clock, 768x528, 31.250Khz horizontal, 59.18Hz vertical
-	-- Vertical           Horizontal
-	-- A =  32 lines      F =   48 clocks
-	-- B =   2 lines      C =   46 clocks
-	-- C =  46 lines      D =   34 clocks
-	-- D = 448 lines      E =  256 clocks
-	-- E = 528 lines      A =  384 clocks
-	-- F =  80 lines      B =  128 clocks
-
-	scan_dbl : entity work.VGA_SCANDBL
+	scan_conv : entity work.VGA_SCANCONV
 	port map (
 		I_VIDEO(15 downto 12)=> "0000",
 		I_VIDEO(11 downto 8) => s_red,
@@ -429,6 +405,7 @@ begin
 		I_VIDEO( 3 downto 0) => s_blu,
 		I_HSYNC					=> s_hsync_n,
 		I_VSYNC					=> s_vsync_n,
+		I_CMPBLK_N				=> s_cmpblk_n,
 		--
 		O_VIDEO(15 downto 12)=> dummy,
 		O_VIDEO(11 downto 8) => VideoR,
@@ -438,7 +415,7 @@ begin
 		O_VSYNC					=> VSync,
 		--
 		CLK						=> clk_6M_en,
-		CLK_X2					=> clk_12M
+		CLK_X4					=> clk_24M
 	);
 
 	----------------------

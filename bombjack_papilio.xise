@@ -27,9 +27,9 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="28"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="28"/>
     </file>
-    <file xil_pn:name="source/common/scan_doubler.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="29"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="29"/>
+    <file xil_pn:name="source/common/scan_converter.vhd" xil_pn:type="FILE_VHDL">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="39"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="39"/>
     </file>
     <file xil_pn:name="source/common/dac.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="31"/>

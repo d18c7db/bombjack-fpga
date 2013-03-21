@@ -254,7 +254,7 @@ begin
 	O_VIDEO_B			<= s_blu;
 	O_HSYNC				<= s_hsync_n;
 	O_VSYNC				<= s_vsync_n;
-	O_CMPBLK_n			<= s_cmpblk_n;
+	O_CMPBLK_n			<= s_cmpblk_n_r;
 
 	clk_4M_en			<= I_CLK_4M;
 	clk_6M_en			<= I_CLK_6M;

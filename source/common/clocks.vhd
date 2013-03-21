@@ -32,7 +32,7 @@ entity CLOCKGEN is
 		O_CLK_4M					: out	std_logic;
 		O_CLK_6M					: out	std_logic;
 		O_CLK_12M				: out	std_logic;
---		O_CLK_32M				: out	std_logic;
+		O_CLK_24M				: out	std_logic;
 		O_CLK_48M				: out	std_logic
 --		STATUS					: out	std_logic_vector(7 downto 0);
 --		LOCKED					: out	std_logic
@@ -46,8 +46,6 @@ architecture RTL of CLOCKGEN is
 	signal ctr_even			: std_logic_vector(2 downto 0) := (others => '0');
 	signal ctr_odd				: std_logic_vector(3 downto 0) := (others => '0');
 
-	-- Input clock buffering
-	signal clkin1				: std_logic := '0';
 	-- Output clock buffering
 	signal clkfb				: std_logic := '0';
 	signal clk0					: std_logic := '0';
@@ -59,21 +57,19 @@ begin
 --	STATUS <= status_internal;
 --	LOCKED <= locked_internal;
 
---	O_CLK_32M <= clkin1;
 	O_CLK_48M <= clkfx_buf;
-	clkin1_buf	: IBUFG port map (I => I_CLK, O => clkin1);
 	clkout1_buf	: BUFG  port map (I => clkfx, O => clkfx_buf);
 
 	dcm_sp_inst: DCM_SP
 	generic map(
-		CLKFX_DIVIDE				=> C_CLKFX_DIVIDE  ,
+		CLKFX_DIVIDE				=> C_CLKFX_DIVIDE,
 		CLKFX_MULTIPLY				=> C_CLKFX_MULTIPLY,
 		CLKIN_PERIOD				=> C_CLKIN_PERIOD
 
 	)
 	port map (
 		-- Input clock
-		CLKIN			=> clkin1,
+		CLKIN			=> I_CLK,
 		CLKFB			=> clkfb,
 		-- Output clocks
 		CLK0			=> clkfb,
@@ -112,5 +108,6 @@ begin
 	O_CLK_6M <= ctr_even(2);
 	-- generate 12Mhz clk enable
 	clk12m_bufg_inst : bufg  port map (I=>ctr_even(1), O=>O_CLK_12M);
+	O_CLK_24M <= ctr_even(0);
 
 end RTL;
