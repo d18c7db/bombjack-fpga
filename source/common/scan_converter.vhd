@@ -27,12 +27,12 @@
 -- __________________|  |________________________________|  |__________________________
 -- VSYNC             |__|              VSYNC             |__|              VSYNC
 
--- Scan doubler input and output timings compared to standard VGA
+-- Scan converter input and output timings compared to standard VGA
 --	Resolution   - Frame   | Pixel      | Front     | HSYNC      | Back       | Active      | HSYNC    | Front    | VSYNC    | Back     | Active    | VSYNC
 --              - Rate    | Clock      | Porch hA  | Pulse hB   | Porch hC   | Video hD    | Polarity | Porch vA | Pulse vB | Porch vC | Video vD  | Polarity
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 --  In  256x224 - 59.18Hz |  6.000 MHz | 38 pixels |  32 pixels |  58 pixels |  256 pixels | negative | 16 lines | 8 lines  | 16 lines | 224 lines | negative
---  Out 512x448 - 59.18Hz | 24.000 MHz | 63 pixels |  96 pixels |  97 pixels |  512 pixels | negative | 33 lines | 2 lines  | 45 lines | 448 lines | negative
+--  Out 640x480 - 59.18Hz | 24.000 MHz |  2 pixels |  92 pixels |  34 pixels |  640 pixels | negative | 17 lines | 2 lines  | 29 lines | 480 lines | negative
 --  VGA 640x480 - 60.00Hz | 25.175 MHz | 16 pixels |  96 pixels |  48 pixels |  640 pixels | negative | 11 lines | 2 lines  | 31 lines | 480 lines | negative
 
 library ieee;
@@ -78,15 +78,25 @@ architecture RTL of VGA_SCANCONV is
 	--
 	-- output timing
 	--
-	signal ohsync_last	: std_logic := '0';
 	signal ovsync_last	: std_logic := '0';
 	signal in_cmpblk_n	: std_logic := '1';
 	signal hpos_o			: std_logic_vector( 9 downto 0) := (others => '0');
-	signal vcnt				: std_logic_vector( 9 downto 0) := (others => '0');
-	signal hcnt				: std_logic_vector( 9 downto 0) := (others => '0');
+
+	signal vcnt				: integer range 0 to 1023 := 0;
+	signal hcnt				: integer range 0 to 1023 := 0;
 
 	signal bank				: std_logic := '0';
 	signal bank_n			: std_logic := '1';
+
+	constant hB				: integer range 0 to 1023 :=  92;	-- h sync
+	constant hC				: integer range 0 to 1023 :=  96;	-- h back porch
+	constant hres			: integer range 0 to 1023 := 512;	-- visible video
+	constant hpad			: integer range 0 to 1023 :=  64;	-- padding either side to reach standard VGA resolution (hres + hpad = hD)
+
+	constant vB				: integer range 0 to 1023 :=   2;	-- v sync
+	constant vC				: integer range 0 to 1023 :=  48;	-- v back porch
+	constant vres			: integer range 0 to 1023 := 448;	-- visible video
+	constant vpad			: integer range 0 to 1023 :=  16;	-- padding either side to reach standard VGA resolution (vres + vpad = vD)
 
 --pragma translate_off
 	signal qidx				: std_logic_vector( 7 downto 0) := (others => '0');
@@ -181,7 +191,6 @@ begin
 			in_cmpblk_n <= I_CMPBLK_N; -- 1 clock delay
 
 			if in_cmpblk_n = '0' then
---			if hcnt < 512 then
 				hpos_i <= (others => '0');
 			else
 				hpos_i <= hpos_i + 1;
@@ -193,45 +202,72 @@ begin
 	p_out_ctrs : process(CLK_X4)
 	begin
 		if rising_edge (CLK_X4) then
-			ohsync_last <= I_HSYNC;
 			ovsync_last <= I_VSYNC;
 
 			if (I_VSYNC = '0') and (ovsync_last = '1') then
-				hcnt <= (others => '0');
-				vcnt <= (others => '0');
+				hcnt <= 0;
+				vcnt <= 0;
 			else
 				hcnt <= hcnt + 1;
 				if hcnt = 767 then
-					hcnt <= (others => '0');
+					hcnt <= 0;
 					vcnt <= vcnt + 1;
 				end if;
 			end if;
 		end if;
 	end process;
 
-	p_out_timing : process(CLK_X4)
+	-- generate hsync
+	p_gen_hsync : process(CLK_X4)
 	begin
 		if rising_edge (CLK_X4) then
 			-- H sync timing
-			if hcnt >= 0 and hcnt < 96 then
+			if (hcnt < hB) then
+--			if (hcnt < 96) then
 				O_HSYNC <= '0';
 			else
 				O_HSYNC <= '1';
 			end if;
+		end if;
+	end process;
 
+	-- generate vsync
+	p_gen_vsync : process(CLK_X4)
+	begin
+		if rising_edge (CLK_X4) then
 			-- V sync timing
-			if vcnt = 3 or vcnt = 4 then
+			if (vcnt < vB) then
+--			if (vcnt < 2) then
 				O_VSYNC <= '0';
 			else
 				O_VSYNC <= '1';
 			end if;
+		end if;
+	end process;
 
-			-- active video area
-			if (vcnt > 49 and vcnt < 498) and (hcnt > 190 and hcnt < 704) then
+	-- generate active output video
+	p_gen_active_vid : process(CLK_X4)
+	begin
+		if rising_edge (CLK_X4) then
+			-- visible video area 512x448 (doubled from the original game's 256x224)
+			if ((vcnt >= (vB + vC)) and (vcnt < (vB + vC + vres))) and ((hcnt >= (hB + hC)) and (hcnt < (hB + hC + hres))) then
+--			if ((vcnt >= ( 2 + 48)) and (vcnt < ( 2 + 48 +  448))) and ((hcnt >= (96 + 96)) and (hcnt < (96 + 96 +  512))) then
 				hpos_o <= hpos_o + 1;
-				out_cmpblk_n <= '1';
 			else
 				hpos_o <= (others => '0');
+			end if;
+		end if;
+	end process;
+
+	-- generate blanking signal including additional borders to pad the input signal to standard VGA resolution
+	p_gen_blank : process(CLK_X4)
+	begin
+		if rising_edge (CLK_X4) then
+			-- active video area 640x480 (VGA) after padding with blank borders
+			if ((vcnt >= (vB + vC - vpad)) and (vcnt < (vB + vC + vres + vpad))) and ((hcnt >= (hB + hC - hpad)) and (hcnt < (hB + hC + hres + hpad))) then
+--			if ((vcnt >= ( 2 + 48 -   16)) and (vcnt < ( 2 + 48 + 448  +   16))) and ((hcnt >= (96 + 96 -   64)) and (hcnt < (96 + 96 +  512 +   64))) then
+				out_cmpblk_n <= '1';
+			else
 				out_cmpblk_n <= '0';
 			end if;
 
