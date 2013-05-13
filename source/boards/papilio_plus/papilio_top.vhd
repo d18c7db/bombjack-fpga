@@ -394,10 +394,27 @@ begin
 		I_CLK_12M			=> clk_12M
 	);
 
-	---------------------------------------------------------------
-	-- video scan doubler required to display video on VGA hardware
-	---------------------------------------------------------------
+	-----------------------------------------------------------------
+	-- video scan converter required to display video on VGA hardware
+	-----------------------------------------------------------------
+	-- game native resolution 224x256
+	-- take note: the values below are relative to the CLK_X4 period not standard VGA clock period
 	scan_conv : entity work.VGA_SCANCONV
+	generic map (
+		hA				=>  16,	-- h front porch
+		hB				=>  92,	-- h sync
+		hC				=>  46,	-- h back porch
+		hres			=> 512,	-- visible video
+		hpad			=>  51,	-- padding either side to reach standard VGA resolution (hres + 2*hpad = hD)
+
+		vB				=>   2,	-- v sync
+		vC				=>  32,	-- v back porch
+		vres			=> 448,	-- visible video
+		vpad			=>  16,	-- padding either side to reach standard VGA resolution (vres + vpad = vD)
+
+		cstart      =>  56,  -- composite sync start
+		clength     => 256   -- composite sync length
+	)
 	port map (
 		I_VIDEO(15 downto 12)=> "0000",
 		I_VIDEO(11 downto 8) => s_red,
@@ -405,7 +422,6 @@ begin
 		I_VIDEO( 3 downto 0) => s_blu,
 		I_HSYNC					=> s_hsync_n,
 		I_VSYNC					=> s_vsync_n,
-		I_CMPBLK_N				=> s_cmpblk_n,
 		--
 		O_VIDEO(15 downto 12)=> dummy,
 		O_VIDEO(11 downto 8) => VideoR,
