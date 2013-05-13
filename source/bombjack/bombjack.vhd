@@ -26,6 +26,10 @@
 -- fixed: Bomb Jack death animation sequence, wrongly inverting s_7C6 though 6M on page 4
 -- fixed: 32x32 tiles not showing correclty when running from SRAM but correct when running from BRAM, SRAM state machine needed to run continuously
 --
+-- v0.8
+--
+-- fixed: color palette access contention between CPU and video, causing glitches to appear on a few scan lines between screen transitions
+--
 --	Known Issues
 --
 -- Last 8 pixels of the last video line not showing, can be observed quring squares test pattern (not visible in game)
@@ -659,6 +663,7 @@ begin
 	----------------------------------------------------
 	p8 : entity work.palette
 	port map (
+		I_CLK_12M			=> clk_12M,
 		I_CLK_6M_EN			=> clk_6M_en,
 		I_CS_9C00_n			=> s_cs_9c00_n,
 		I_MEWR_n				=> s_mewr_n,

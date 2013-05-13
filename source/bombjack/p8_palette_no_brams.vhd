@@ -24,6 +24,7 @@ library unisim;
 
 entity palette is
 	port ( 
+		I_CLK_12M		: in  std_logic;
 		I_CLK_6M_EN		: in  std_logic;
 		I_CS_9C00_n		: in  std_logic;
 		I_MEWR_n			: in  std_logic;
@@ -92,6 +93,7 @@ architecture RTL of palette is
 --	 x"0", x"0", x"0", x"1", x"1", x"8", x"9", x"A", x"3", x"9", x"3", x"0", x"A", x"8", x"A", x"A", x"3", x"A", x"1", x"A", x"8", x"7", x"E", x"C", x"0", x"0", x"4", x"3", x"3", x"6", x"6", x"0",
 --	 x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0",
 --	 x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0", x"0");
+
 begin
 	-- chip 5M page 8
 	s_5M8  <= not ( I_OV(0) or I_OV(1) or I_OV(2) );
@@ -118,8 +120,8 @@ begin
 		end if;
 	end process;
 
-	-- chips 6D, 6F page 8
-	s_color_addr <= I_AB(8 downto 1) when (I_CS_9C00_n = '0') else ("0" & s_5E_out(7 downto 1)) ;
+	-- chips 6D, 6F page 8 - caution: 4M and 6M clock domains meet here, use CLK_6M enable to separate
+	s_color_addr <= I_AB(8 downto 1) when (I_CS_9C00_n = '0') and (I_CLK_6M_EN = '0' ) else ("0" & s_5E_out(7 downto 1)) ;
 
 	-- chip 8D page 8
 	s_9c00_rd_n <= ( I_CS_9C00_n or I_MERD_n or (    I_AB(0)) );
@@ -128,7 +130,7 @@ begin
 	-- these are the RGB color palette RAMs at base address 9C00
 	-- even addresses access red bits 0-3 and green bits 4-7
 	-- odd addresses access blue bits 0-3, bits 4-7 unused
-
+	-- palette accessed by CPU on 4M clock domain and video on 6M clock domain
 	rgb_pal : process(I_CLK_6M_EN)
 	begin
 		if falling_edge(I_CLK_6M_EN) then
