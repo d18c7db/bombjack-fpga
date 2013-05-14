@@ -122,6 +122,7 @@ architecture RTL of BOMB_JACK is
 	signal clk_4M_en			: std_logic := '0';
 	signal clk_6M_en			: std_logic := '0';
 	signal clk_12M				: std_logic := '0';
+	signal s_clk_en			: std_logic := '0';
 	signal s_flip				: std_logic := '0';
 	signal s_merd_n			: std_logic := '1';
 	signal s_mewr_n			: std_logic := '1';
@@ -206,9 +207,9 @@ architecture RTL of BOMB_JACK is
 	signal s_hsync_n			: std_logic := '1';
 	signal s_cmpblk_n_r		: std_logic := '1';
 	signal s_vblank_n			: std_logic := '1';
-	signal s_vblank			: std_logic := '1';
+	signal s_vblank_t0		: std_logic := '1';
+	signal s_vblank_t1		: std_logic := '1';
 	signal s_cmpblk_n			: std_logic := '1';
-	signal s_cmpblk_n_last	: std_logic := '1';
 	signal s_sw_n				: std_logic := '1';
 	signal s_hbl				: std_logic := '0';
 	signal s_vpl_n				: std_logic := '1';
@@ -292,12 +293,16 @@ begin
 	cpu_reset_n <= RESETn and (not wd_ctr(3));
 
 	-- chip 5N page 1
-	watchdog : process(s_vblank, s_wdclr)
+	watchdog : process(clk_12M, s_wdclr)
 	begin
 		if (s_wdclr = '1') then
 			wd_ctr <= "0000";
-		elsif falling_edge(s_vblank) then
-			wd_ctr <= wd_ctr  + 1;
+		elsif falling_edge(clk_12M) then
+			s_vblank_t1 <= s_vblank_t0;
+			-- falling edge of s_vblank_n
+			if (s_vblank_t0 = '0' and s_vblank_t1 = '1') then
+				wd_ctr <= wd_ctr  + 1;
+			end if;
 		end if;
 	end process;
 
@@ -308,13 +313,12 @@ begin
 	s_mewr_n <= cpu_mreq_n or cpu_wr_n;
 
 	-- chip 1C12 page 1
-	process(clk_12M)
+	process
 	begin
-		if rising_edge(clk_12M) then
-			-- only let this change when CPU not enabled
-			if (clk_4M_en = '0') then
-				s_wait <= not (s_ram2_n or s_sw_n or s_hbl);
-			end if;
+		wait until rising_edge(clk_12M);
+		-- only let this change when CPU not enabled
+		if (clk_4M_en = '0') then
+			s_wait <= not (s_ram2_n or s_sw_n or s_hbl);
 		end if;
 	end process;
 
@@ -324,20 +328,26 @@ begin
 	-- chip 6P10 page 1 (deviation from schematic to cleanup the wait pulse by taking s_7P5 into account as well)
 	s_wait_n <= not (s_wait or s_7P9 or s_7P5);
 
+	-- clock enable for sound sections P9, P10
+	s_clk_en <= s_1H and not clk_6M_en; -- create a 3M clock enable for the 12M clock
+
 	-- chip 5P5 page 1
-	U5P5 : process(s_vblank, s_nmion)
+	U5P5 : process(clk_12M, s_nmion)
 	begin
 		if s_nmion = '0' then
 			s_nmi_n <= '1';
-		elsif rising_edge(s_vblank) then
-			s_nmi_n <= '0';
+		elsif falling_edge(clk_12M) then
+			-- rising edge of s_vblank_n
+			if (s_vblank_t0 = '1' and s_vblank_t1 = '0') then
+				s_nmi_n <= '0';
+			end if;
 		end if;
 	end process;
 
 	-- chip 7P page 1
-	U7P5 : process(clk_12M, s_vblank)
+	U7P5 : process(clk_12M, s_vblank_t0)
 	begin
-		if s_vblank = '1' then
+		if s_vblank_t0 = '1' then
 			s_7P5 <= '0';
 		elsif rising_edge(clk_12M) then
 			if (clk_4M_en = '1') then
@@ -346,12 +356,11 @@ begin
 		end if;
 	end process;
 
-	U7P9 : process(clk_12M)
+	U7P9 : process
 	begin
-		if rising_edge(clk_12M) then
-			if (clk_4M_en = '1') then
-				s_7P9 <= s_7P5;
-			end if;
+		wait until rising_edge(clk_12M);
+		if (clk_4M_en = '1') then
+			s_7P9 <= s_7P5;
 		end if;
 	end process;
 
@@ -463,9 +472,10 @@ begin
 	-------------------------------------------------------------------------
 	p2 : entity work.switches
 	port map (
+		I_CLK_12M			=> clk_12M,
+		I_CLK_6M_EN			=> clk_6M_en,
 		I_AB					=> cpu_addr(2 downto 0),
 		I_DB0					=> cpu_data_out(0),
-		I_CLK					=> clk_6M_en,
 		I_CS_B000_n			=> s_cs_b000_n,	-- mem select region 0xb000 - 0xb7ff
 		I_MERD_n				=> s_merd_n,		-- mem rd signal
 		I_MEWR_n				=> s_mewr_n,		-- mem wr signal
@@ -487,6 +497,7 @@ begin
 	-------------------------------------------------------
 	p3 : entity work.timing
 	port map (
+		I_CLK_12M			=> clk_12M,
 		I_CLK_6M_EN			=> clk_6M_en,
 		I_FLIP				=> s_flip,
 		I_CS_9A00_n			=> s_cs_9a00_n,
@@ -495,7 +506,6 @@ begin
 		I_DB					=> cpu_data_out( 3 downto 0),
 		--
 		O_SLOAD_n			=> s_sload_n,
---		O_SLOAD				=> open,
 		O_SL1_n				=> s_sl1_n,
 		O_SL2_n				=> s_sl2_n,
 		O_SW_n				=> s_sw_n,
@@ -514,7 +524,7 @@ begin
 		O_CMPBLK_n			=> s_cmpblk_n,
 --		O_CMPBLK				=> open,
 		O_VBLANK_n			=> s_vblank_n,
-		O_VBLANK				=> s_vblank,
+		O_VBLANK				=> s_vblank_t0,
 		O_TVSYNC_n			=> open,
 		O_HSYNC_n 			=> s_hsync_n,
 
@@ -587,8 +597,8 @@ begin
 	----------------------------------------
 	p5 : entity work.sprite_position
 	port map (
-		I_CLK_6M_EN		=> clk_6M_en,
 		I_CLK_12M		=> clk_12M,
+		I_CLK_6M_EN		=> clk_6M_en,
 		I_FLIP			=> s_flip,
 		I_CONTRLDA_n	=> s_contrlda_n,
 		I_CONTRLDB_n	=> s_contrldb_n,
@@ -609,8 +619,8 @@ begin
 	-----------------------------------------
 	p6 : entity work.char_gen
 	port map (
-		I_CLK_6M_EN			=> clk_6M_en,
 		I_CLK_12M			=> clk_12M,
+		I_CLK_6M_EN			=> clk_6M_en,
 		I_CS_9000_n			=> s_cs_9000_n,
 		I_MEWR_n				=> s_mewr_n,
 		I_CMPBLK_n			=> s_cmpblk_n,
@@ -637,6 +647,7 @@ begin
 	------------------------------------------------
 	p7 : entity work.bgnd_tiles
 	port map (
+		I_CLK_12M			=> clk_12M,
 		I_CLK_6M_EN			=> clk_6M_en,
 		I_CS_9E00_n			=> s_cs_9e00_n,
 		I_MEWR_n				=> s_mewr_n,
@@ -690,8 +701,9 @@ begin
 	-----------------------------------------
 	p9 : entity work.audio
 	port map (
+		I_CLK_12M			=> clk_12M,
+		I_CLK_EN				=> s_clk_en,
 		I_RESET_n			=> RESETn,
-		I_CLK_3M				=> s_1H,
 		I_VSYNC_n			=> s_vsync_n,
 		I_CS_B800_n			=> s_cs_b800_n,
 		I_MERW_n				=> s_mewr_n,
@@ -711,8 +723,9 @@ begin
 	----------------------------------------------------
 	p10 : entity work.psgs
 	port map (
+		I_CLK_12M			=> clk_12M,
+		I_CLK_EN				=> s_clk_en,
 		I_RST_n				=> RESETn,
-		I_CLK					=> s_1H,
 		I_SWR_n				=> s_swr_n,
 		I_SRD_n				=> s_srd_n,
 		I_SA0					=> s_sa0,

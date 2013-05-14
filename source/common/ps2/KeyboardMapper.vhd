@@ -29,12 +29,11 @@ end KeyboardMapper;
 architecture Behavioral of KeyboardMapper is
 
 	type StateType is (ResetKbd, ResetAck, WaitForBAT, Start, Extended, ExtendedBreak, Break, LEDs, CheckAck);
-	signal State      : StateType;
+	signal State      : StateType := Start;
 	signal CapsLock   : STD_LOGIC;
 	signal NumLock    : STD_LOGIC;
 	signal ScrollLock : STD_LOGIC;
 --	signal PauseON    : STD_LOGIC;
---	signal i          : natural range 0 to 7;
 
 begin
 
@@ -45,7 +44,6 @@ begin
 			NumLock <= '0';
 			ScrollLock <= '0';
 --			PauseON <= '0';
---			i <= 0;
 			Send <= '0';
 			Command <= (others => '0');
 			CodeReady <= '0';

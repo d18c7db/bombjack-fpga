@@ -34,8 +34,6 @@ entity CLOCKGEN is
 		O_CLK_12M				: out	std_logic;
 		O_CLK_24M				: out	std_logic;
 		O_CLK_48M				: out	std_logic
---		STATUS					: out	std_logic_vector(7 downto 0);
---		LOCKED					: out	std_logic
 	);
 end CLOCKGEN;
 
@@ -50,12 +48,7 @@ architecture RTL of CLOCKGEN is
 	signal clkfb				: std_logic := '0';
 	signal clk0					: std_logic := '0';
 	signal clkfx				: std_logic := '0';
---	signal locked_internal	: std_logic := '0';
---	signal status_internal	: std_logic_vector(7 downto 0)  := (others => '0');
 begin
-
---	STATUS <= status_internal;
---	LOCKED <= locked_internal;
 
 	O_CLK_48M <= clkfx_buf;
 	clkout1_buf	: BUFG  port map (I => clkfx, O => clkfx_buf);
@@ -75,8 +68,6 @@ begin
 		CLK0			=> clkfb,
 		CLKFX			=> clkfx,
 		-- Other control and status signals
---		LOCKED		=> locked_internal,
---		STATUS		=> status_internal,
 		RST			=> I_RST
 	);
 
@@ -102,12 +93,10 @@ begin
 			end if;
 		end if;
 	end process gen_clk;
-	-- generate 4Mhz clk enable
-	O_CLK_4M <= ctr_odd(2);
-	-- generate 6Mhz clk enable
-	O_CLK_6M <= ctr_even(2);
-	-- generate 12Mhz clk enable
-	clk12m_bufg_inst : bufg  port map (I=>ctr_even(1), O=>O_CLK_12M);
+
+	O_CLK_4M  <= ctr_odd(2);
+	O_CLK_6M  <= ctr_even(2);
+	O_CLK_12M <= ctr_even(1);
 	O_CLK_24M <= ctr_even(0);
 
 end RTL;

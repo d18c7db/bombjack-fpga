@@ -168,6 +168,7 @@ begin
 --		O_CLK_32M	=> open,
 		O_CLK_48M	=> clk_48M
 	);
+
 	da : for i in 0 to 5 generate
 	begin
 		dad : entity work.digit

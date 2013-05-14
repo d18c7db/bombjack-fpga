@@ -22,8 +22,8 @@ library unisim;
 
 entity char_gen is
 	port (
-		I_CLK_6M_EN			: in  std_logic;
 		I_CLK_12M			: in  std_logic;
+		I_CLK_6M_EN			: in  std_logic;
 		I_CS_9000_n			: in  std_logic;
 		I_MEWR_n				: in  std_logic;
 		I_CMPBLK_n			: in  std_logic;
@@ -93,17 +93,19 @@ begin
 	);
 
 	-- chip 5L page 6
-	process(I_SL1_n)
+	process
 	begin
-		if rising_edge(I_SL1_n) then
+		wait until rising_edge(I_CLK_12M);
+		if (I_SL1_n = '0') then
 			s_5L_bus <= s_6LM_data;
 		end if;
 	end process;
 
 	-- chip 4L page 6
-	process(I_SL2_n)
+	process
 	begin
-		if rising_edge(I_SL2_n) then
+		wait until rising_edge(I_CLK_12M);
+		if (I_SL2_n = '0') then
 			s_4L_bus <= s_6LM_data;
 		end if;
 	end process;
@@ -114,9 +116,10 @@ begin
 	s_6P11 <= I_6P_BUS(0) xor s_4L_bus(7); -- T0
 
 	-- chip 4M, 6N6 page 6
-	U4M : process(I_CLK_6M_EN)
+	U4M : process
 	begin
-		if rising_edge(I_CLK_6M_EN) then
+		wait until rising_edge(I_CLK_12M);
+		if I_CLK_6M_EN = '1' then
 			if I_SLOAD_n = '0' then
 				s_4M12 <= s_4L_bus(6);
 				O_SC   <= s_4L_bus(3 downto 0);
@@ -131,9 +134,10 @@ begin
 	s_sv_s1_s0 <= (s_sv_s1 & s_6N8);
 
 	-- chips 7J, 7K, 7F, 7H, 7D, 7E page 6
-	shifters_pg6 : process(I_CLK_6M_EN)
+	shifters_pg6 : process
 	begin
-		if rising_edge(I_CLK_6M_EN) then
+		wait until rising_edge(I_CLK_12M);
+		if I_CLK_6M_EN = '1' then
 			case s_sv_s1_s0 is
 				when "11" =>         -- load
 					s_shifter_7J_7K <= I_ROM_8KHE_DATA(23 downto 16);

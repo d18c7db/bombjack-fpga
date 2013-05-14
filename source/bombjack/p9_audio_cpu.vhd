@@ -26,8 +26,9 @@ library unisim;
 
 entity audio is
 	port (
+		I_CLK_12M	: in  std_logic;
+		I_CLK_EN		: in  std_logic;
 		I_RESET_n	: in  std_logic;
-		I_CLK_3M		: in  std_logic;
 		I_VSYNC_n	: in  std_logic;
 		I_CS_B800_n	: in  std_logic;
 		I_MERW_n		: in  std_logic;
@@ -44,31 +45,38 @@ entity audio is
 end audio;
 
 architecture RTL of audio is
-	signal cpu_addr		: std_logic_vector(15 downto 0) := (others => '0');
-	signal cpu_data_in	: std_logic_vector( 7 downto 0) := (others => '0');
-	signal cpu_data_out	: std_logic_vector( 7 downto 0) := (others => '0');
-	signal rom_3H_data	: std_logic_vector( 7 downto 0) := (others => '0');
---	signal rom_3J_data	: std_logic_vector( 7 downto 0) := (others => '0');
-	signal s_2L_bus		: std_logic_vector( 7 downto 0) := (others => '0');
-	signal ram_data		: std_logic_vector( 7 downto 0) := (others => '0');
-	signal s_CLK_3M_n		: std_logic := '0';
-	signal s_b800_wr_n	: std_logic := '1';
-	signal s_60H_n			: std_logic := '1';
-	signal s_sram			: std_logic := '0';
-	signal s_srom1			: std_logic := '0';
---	signal s_srom2			: std_logic := '0';
-	signal s_srd_n			: std_logic := '1';
-	signal s_swr			: std_logic := '0';
-	signal s_swr_n			: std_logic := '1';
-	signal s_mreq_n		: std_logic := '1';
-	signal s_iorq_n		: std_logic := '1';
-	signal s_2F3			: std_logic := '0';
-	signal s_2F6			: std_logic := '0';
-	signal s_2J6_n			: std_logic := '1';
-	signal s_2J8_n			: std_logic := '1';
-	signal s_2M3_n			: std_logic := '1';
+	signal cpu_addr			: std_logic_vector(15 downto 0) := (others => '0');
+	signal cpu_data_in		: std_logic_vector( 7 downto 0) := (others => '0');
+	signal cpu_data_out		: std_logic_vector( 7 downto 0) := (others => '0');
+	signal rom_3H_data		: std_logic_vector( 7 downto 0) := (others => '0');
+--	signal rom_3J_data		: std_logic_vector( 7 downto 0) := (others => '0');
+	signal s_2L_bus			: std_logic_vector( 7 downto 0) := (others => '0');
+	signal ram_data			: std_logic_vector( 7 downto 0) := (others => '0');
+	signal s_b800_wr_n_t0	: std_logic := '1';
+	signal s_b800_wr_n_t1	: std_logic := '1';
+	signal s_b800_wr_n_re	: std_logic := '1';
+	signal s_60H_n				: std_logic := '1';
+	signal s_sram				: std_logic := '0';
+	signal s_srom1				: std_logic := '0';
+--	signal s_srom2				: std_logic := '0';
+	signal s_srd_n				: std_logic := '1';
+	signal s_swr				: std_logic := '0';
+	signal s_swr_n				: std_logic := '1';
+	signal s_mreq_n			: std_logic := '1';
+	signal s_iorq_n			: std_logic := '1';
+	signal s_2F3_t0			: std_logic := '0';
+	signal s_2F3_t1			: std_logic := '0';
+	signal s_2F3_re			: std_logic := '0';
+	signal s_2F6				: std_logic := '0';
+	signal s_2J6_n				: std_logic := '1';
+	signal s_2J8_n				: std_logic := '1';
+	signal s_2M3_n				: std_logic := '1';
+	signal s_vsync_n_t0		: std_logic := '0';
+	signal s_vsync_n_t1		: std_logic := '0';
+	signal s_vsync_n_re		: std_logic := '0';
 
 begin
+
 	-- outputs to PSG board
 	O_SD		<= cpu_data_out;
 	O_SA0		<= cpu_addr(0);
@@ -80,11 +88,7 @@ begin
 	O_PSG2_n  <= not ( (not s_iorq_n) and (not cpu_addr(7)) and (    cpu_addr(4)) );
 	O_PSG1_n  <= not ( (not s_iorq_n) and (not cpu_addr(7)) and (not cpu_addr(4)) );
 
-	s_CLK_3M_n <= not I_CLK_3M;
 	s_swr <= not s_swr_n;
-
-	-- chip 3N6 page 2
-	s_b800_wr_n <= I_MERW_n or I_CS_B800_n; -- /B800H on schema page 2
 
 	-- chip 5D page 9
 	s_60H_n <= not ( (not s_mreq_n) and (    cpu_addr(14)) and (    cpu_addr(13)) );
@@ -96,49 +100,75 @@ begin
 	-- chip 2M3
 	s_2M3_n <= I_RESET_n and s_60H_n;
 
-	-- chip 2F3
-	s_2F3 <= s_srd_n or s_60H_n;
+	-- generate clock enables for 12M
+	gen_clken : process
+	begin
+		wait until rising_edge(I_CLK_12M);
+
+		-- chip 2F3
+		s_2F3_t1 <= s_2F3_t0;
+		s_2F3_t0 <= s_srd_n or s_60H_n;
+
+		-- chip 3N6 page 2
+		s_b800_wr_n_t1 <= s_b800_wr_n_t0;
+		s_b800_wr_n_t0 <= I_MERW_n or I_CS_B800_n; -- /B800H on schema page 2
+
+		-- rising edge of VSYNC
+		s_vsync_n_t1 <= s_vsync_n_t0;
+		s_vsync_n_t0 <= I_VSYNC_n;
+	end process;
+
+	-- rising edges
+	s_2F3_re       <= s_2F3_t0 and not s_2F3_t1;
+	s_vsync_n_re   <= s_vsync_n_t0 and not s_vsync_n_t1;
+	s_b800_wr_n_re <= s_b800_wr_n_t0 and not s_b800_wr_n_t1;
 
 	-- chip 2F6
-	s_2F6 <= I_CLK_3M or s_2J6_n;
+	s_2F6 <= I_CLK_EN or s_2J6_n;
 
 	-- chip 2J6 page 9
-	U2J6 : process(s_2F3, s_2F6)
+	U2J6 : process(I_CLK_12M, s_2F6)
 	begin
 		if s_2F6 = '0' then
 			s_2J6_n <= '1';
-		elsif rising_edge(s_2F3) then
-			s_2J6_n <= '0';
+		elsif rising_edge(I_CLK_12M) then
+			if (s_2F3_re = '1') then
+				s_2J6_n <= '0';
+			end if;
 		end if;
 	end process;
 
 	-- chip 2J8 page 9
 	-- F/F clock not labeled on schema, determined to be /vsync
-	U2J8 : process(I_VSYNC_n, s_2M3_n)
+	U2J8 : process(I_CLK_12M, s_2M3_n)
 	begin
 		if s_2M3_n = '0' then
 			s_2J8_n <= '1';
-		elsif rising_edge(I_VSYNC_n) then
-			s_2J8_n <= '0';
+		elsif rising_edge(I_CLK_12M) then
+			if (s_vsync_n_re = '1') then
+				s_2J8_n <= '0';
+			end if;
 		end if;
 	end process;
 
 	-- chip 2L page 9
-	U2L : process(s_b800_wr_n, s_2J6_n)
+	U2L : process(I_CLK_12M, s_2J6_n)
 	begin
 		if s_2J6_n = '0' then
 			s_2L_bus <= (others => '0');
-		elsif rising_edge(s_b800_wr_n) then
-			s_2L_bus <= I_DB_CPU;
+		elsif rising_edge(I_CLK_12M) then
+			if (s_b800_wr_n_re = '1') then
+				s_2L_bus <= I_DB_CPU;
+			end if;
 		end if;
 	end process;
 
 	-- CPU data bus mux
 	cpu_data_in <=
-		s_2L_bus    when (s_2F3   = '0') else
-		ram_data    when (s_sram  = '1') else
-		rom_3H_data when (s_srom1 = '1') else
---		rom_3J_data when (s_srom2 = '1') else
+		s_2L_bus    when (s_2F3_t0 = '0') else
+		ram_data    when (s_sram   = '1') else
+		rom_3H_data when (s_srom1  = '1') else
+--		rom_3J_data when (s_srom2  = '1') else
 		I_SD;
 
 	-- CPU RAM 
@@ -148,7 +178,7 @@ begin
 		do   => ram_data,
 		dop  => open,
 		addr => cpu_addr(10 downto 0),
-		clk  => s_CLK_3M_n,
+		clk  => I_CLK_12M,
 		di   => cpu_data_out,
 		dip  => "0",
 		en   => s_sram,
@@ -159,7 +189,7 @@ begin
 	-- chip 3H page 9
 	ROM_3H : entity work.ROM_3H
 		port map (
-			CLK	=> s_CLK_3M_n,
+			CLK	=> I_CLK_12M,
 			ENA	=> s_srom1,
 			ADDR	=> cpu_addr(12 downto 0),
 			DATA	=> rom_3H_data
@@ -174,8 +204,8 @@ begin
 			-- inputs
 			DI      => cpu_data_in,
 			RESET_n => I_RESET_n,
-			CLK_n   => I_CLK_3M,			-- 3Mhz active on rising edge
-			CLKEN   => '1',
+			CLK_n   => I_CLK_12M,
+			CLKEN   => I_CLK_EN,			-- 3Mhz clock enable
 			INT_n   => '1',
 			WAIT_n  => '1',
 			BUSRQ_n => '1',

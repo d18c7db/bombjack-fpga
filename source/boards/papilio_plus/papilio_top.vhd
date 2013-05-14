@@ -163,7 +163,7 @@ architecture RTL of PAPILIO_TOP is
 	signal s_audio				: std_logic_vector( 7 downto 0) := (others => '0');
 
 	signal s_cmpblk_n			: std_logic := '1';
-	signal s_cmpblk_n_last	: std_logic := '1';
+	signal s_cmpblk_n_t1	: std_logic := '1';
 	signal s_dac_out			: std_logic := '1';
 
 	signal s_hsync_n			: std_logic := '1';
@@ -468,8 +468,9 @@ begin
 	ram_state : process(clk_48M, s_cmpblk_n)
 	begin
 		if rising_edge(clk_48M) then
-			s_cmpblk_n_last <= s_cmpblk_n;
-			if (s_cmpblk_n_last = '0') and (s_cmpblk_n = '1') then -- rising edge of s_cmpblk_n
+			s_cmpblk_n_t1 <= s_cmpblk_n;
+			-- rising edge of s_cmpblk_n
+			if (s_cmpblk_n = '1') and (s_cmpblk_n_t1 = '0') then
 				ram_state_ctr <= (others => '0');
 			else
 				ram_state_ctr <= ram_state_ctr + 1;

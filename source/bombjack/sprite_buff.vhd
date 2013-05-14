@@ -51,7 +51,6 @@ architecture RTL of sprite_buff is
 	signal s_4X_do				: std_logic_vector( 7 downto 0) := (others => '0');
 
 begin
---	O_BUS <= I_BUS;
 	O_BUS <= s_m;
 
 	-- some chips require 6MHz while others require /6MHz
@@ -83,16 +82,17 @@ begin
 		(others => '1');																-- pullups
 
 	-- chips 6C, 6D also 6A, 6B page 5
-	U_6X : process(I_CLK_6M_EN)
+	U_6X : process
 	begin
-		if rising_edge(I_CLK_6M_EN) then
+		wait until rising_edge(I_CLK_6M_EN);
+--		if I_CLK_6M_EN = '0' then
 			if    (s_6X_clr = '0') and (I_CTRL_LOAD = '1' ) then		-- clear
 				s_6X_count <= (others => '0');
 			elsif (s_6X_clr = '1') and (I_CTRL_LOAD = '0' ) then		-- load
 				s_6X_count <= I_CTR;
 			elsif (s_6X_clr = '1') and (I_CTRL_LOAD = '1' ) then		-- count
 				s_6X_count <= s_6X_count + 1;
-			end if;
+--			end if;
 		end if;
 	end process;
 
@@ -112,14 +112,15 @@ begin
 	);
 
 	-- chips 2C, 2D also 2A, 2B page 5
-	U2X : process(clk_6M_n)
+	U2X : process
 	begin
-		if rising_edge(clk_6M_n) then
+		wait until falling_edge(I_CLK_6M_EN);
+--		if I_CLK_6M_EN = '1' then
 			if (s_4X_cs_n = '0') then
 				s_m <= (not s_4X_do);			-- get data from RAM
 			else
 				s_m <= (others => '0');			-- pullups (but inverted)
 			end if;
-		end if;
+--		end if;
 	end process;
 end RTL;

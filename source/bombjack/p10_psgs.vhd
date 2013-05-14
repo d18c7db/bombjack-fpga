@@ -39,8 +39,9 @@ library ieee;
 
 entity psgs is
 	port (
+		I_CLK_12M	: in  std_logic;
+		I_CLK_EN		: in  std_logic;
 		I_RST_n		: in  std_logic;
-		I_CLK			: in  std_logic;
 		I_SWR_n		: in  std_logic;
 		I_SRD_n		: in  std_logic;
 		I_SA0			: in  std_logic;
@@ -96,9 +97,9 @@ begin
 
 	U34D : entity work.ym2149
 		port map (
-			ENA						=> '1',
+			CLK						=> I_CLK_12M,
+			ENA						=> I_CLK_EN,
 			RESET_L					=> I_RST_n,
-			CLK						=> I_CLK,
 			-- data bus
 			I_DA						=> I_SD,
 			O_DA						=> s_34D_data,
@@ -117,9 +118,9 @@ begin
 
 	U34C : entity work.ym2149
 		port map (
-			ENA						=> '1',
+			CLK						=> I_CLK_12M,
+			ENA						=> I_CLK_EN,
 			RESET_L					=> I_RST_n,
-			CLK						=> I_CLK,
 			-- data bus
 			I_DA						=> I_SD,
 			O_DA						=> s_34C_data,
@@ -138,9 +139,9 @@ begin
 
 	U34A : entity work.ym2149
 		port map (
-			ENA						=> '1',
+			CLK						=> I_CLK_12M,
+			ENA						=> I_CLK_EN,
 			RESET_L					=> I_RST_n,
-			CLK						=> I_CLK,
 			-- data bus
 			I_DA						=> I_SD,
 			O_DA						=> s_34A_data,

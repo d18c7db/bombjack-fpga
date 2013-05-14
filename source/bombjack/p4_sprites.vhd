@@ -24,11 +24,11 @@ library unisim;
 
 entity sprite_gen is
 	port (
-		I_CLK_6M_EN			: in  std_logic;
 		I_CLK_12M			: in  std_logic;
+		I_CLK_6M_EN			: in  std_logic;
 		I_CS_9800_n			: in  std_logic;
 		I_MEWR_n				: in  std_logic;
-		I_MDL_N				: in  std_logic;
+		I_MDL_n				: in  std_logic;
 		I_CDL_n				: in  std_logic;
 		I_VPL_n				: in  std_logic;
 		I_SLOAD_n			: in  std_logic;
@@ -120,26 +120,29 @@ begin
 	-- transparent buffers
 
 	-- chip 5H page 4
-	U5H : process(I_VPL_n)
+	U5H : process
 	begin
-		if rising_edge(I_VPL_n) then
+		wait until rising_edge(I_CLK_12M);
+		if I_VPL_n = '0' then
 			-- chips 5F, 5E (adders) page 4
 			s_5H_bus <= s_3EF_data + I_5EF_BUS;
 		end if;
 	end process;
 
 	-- chip 6F page 4
-	U6F : process(I_MDL_N)
+	U6F : process
 	begin
-		if rising_edge(I_MDL_N) then
+		wait until rising_edge(I_CLK_12M);
+		if I_MDL_N = '0' then
 			s_6F_bus <= s_3EF_data;
 		end if;
 	end process;
 
 	-- chip 6E page 4
-	U6E : process(I_CDL_n)
+	U6E : process
 	begin
-		if rising_edge(I_CDL_n) then
+		wait until rising_edge(I_CLK_12M);
+		if I_CDL_n = '0' then
 			s_6E_bus <= s_3EF_data;
 		end if;
 	end process;
@@ -159,9 +162,10 @@ begin
 	s_6H11 <= s_6E_bus(7) xor s_5H_bus(0); -- c0
 
 	-- chip 7E, 7T11 page 4
-	U7E : process(I_CLK_6M_EN)
+	U7E : process
 	begin
-		if rising_edge(I_CLK_6M_EN) then
+		wait until rising_edge(I_CLK_12M);
+		if I_CLK_6M_EN = '1' then
 			if I_SLOAD_n = '0' then
 				s_mhflip <= s_6E_bus(6);
 				O_MC     <= s_6E_bus(3 downto 0);
@@ -187,9 +191,10 @@ begin
 
 	s_mv_s1_s0 <= (s_mv_s1 & s_7T6);
 	-- chips 6J, 5J, 6K, 5K, 6L, 5L page 4
-	shifters_pg4 : process(I_CLK_6M_EN)
+	shifters_pg4 : process
 	begin
-		if rising_edge(I_CLK_6M_EN) then
+		wait until rising_edge(I_CLK_12M);
+		if I_CLK_6M_EN = '1' then
 			case s_mv_s1_s0 is
 				when "11" =>         -- load
 					s_shifter_6J_5J <= I_ROM_7JLM_DATA(23 downto 16);

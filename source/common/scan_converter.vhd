@@ -110,12 +110,16 @@ architecture RTL of VGA_SCANCONV is
 	signal bank_n			: std_logic := '1';
 
 --pragma translate_off
+	type binary_file is file of character;
+
 	signal qidx				: std_logic_vector( 7 downto 0) := (others => '0');
-	file qfile				: TEXT; -- open write_mode is "..\build\qvga0.ppm";
+	file qfile				: binary_file; -- open WRITE_MODE is in "..\build\qvga0.ppm";
+
 --pragma translate_on
 begin
 -- debug: write input video to .ppm format files
 -- pragma translate_off
+
 	p_debug : process
 		variable rising_h		: boolean;
 		variable rising_v		: boolean;
@@ -134,22 +138,22 @@ begin
 			armed := false;
 			qidx <= qidx + 1;				-- frame number
 			file_close(qfile);
-			write(s,"..\build\qvga"); write(s,conv_integer(qidx)); write(s,".ppm");
-			file_open(qfile,s.all, WRITE_MODE);
+			write(s,"..\build\qvga"); write(s, conv_integer(qidx)); write(s,".ppm");
+			file_open(qfile, s.all, WRITE_MODE);
 			writeline(output,s);
 			-- the resolution here is not the game native resolution, it is the total number of scan lines
 			-- and total number of pixels per scan line including all the blank space on front and back porch
-			write(s,"P3");						writeline(qfile,s);	--	P3 = ASCII colors
-			write(s,"# "); write(s, now);	writeline(qfile,s);	-- sim time as comment
-			write(s,"352 256");				writeline(qfile,s);	--	352 256 (256x224) resolution
-			write(s,"15");						writeline(qfile,s);	--	15 = max color index
+			write(qfile, 'P'); write(qfile, '6'); write(qfile, ' ');								--  P6 = binary file, color
+			write(qfile, '3'); write(qfile, '5'); write(qfile, '2'); write(qfile, ' ');	-- 352 = vert resolution
+			write(qfile, '2'); write(qfile, '5'); write(qfile, '6'); write(qfile, ' ');	-- 256 = horiz resolution
+			write(qfile, '1'); write(qfile, '5'); write(qfile, lf );								--  15 = max color index
+--			write(s,"# "); write(s, now);	-- sim time as comment
 		end if;
 
 		if (I_HSYNC = '1' and I_VSYNC = '1') then
-			write(s, conv_integer(I_VIDEO(11 downto 8)) ); write(s," ");	-- R
-			write(s, conv_integer(I_VIDEO( 7 downto 4)) ); write(s," ");	-- G
-			write(s, conv_integer(I_VIDEO( 3 downto 0)) );						-- B
-			writeline(qfile,s);
+			write(qfile, CHARACTER'VAL( conv_integer(I_VIDEO(11 downto 8) & x"0")) ); -- R
+			write(qfile, CHARACTER'VAL( conv_integer(I_VIDEO( 7 downto 4) & x"0")) ); -- G
+			write(qfile, CHARACTER'VAL( conv_integer(I_VIDEO( 3 downto 0) & x"0")) ); -- B
 		end if;
 	end process;
 

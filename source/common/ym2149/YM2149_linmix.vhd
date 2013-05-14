@@ -94,8 +94,8 @@ entity YM2149 is
 end;
 
 architecture RTL of YM2149 is
-	type  array_16x8   is array (0 to 15) of std_logic_vector(7 downto 0);
-	type  array_3x12   is array (1 to 3) of std_logic_vector(11 downto 0);
+	type  array_16x8   is array (0 to 15) of std_logic_vector( 7 downto 0);
+	type  array_3x12   is array (1 to  3) of std_logic_vector(11 downto 0);
 
 	signal cnt_div				: std_logic_vector(3 downto 0) := (others => '0');
 	signal noise_div			: std_logic := '0';
@@ -123,7 +123,7 @@ architecture RTL of YM2149 is
 	signal env_ena				: std_logic;
 	signal env_hold			: std_logic;
 	signal env_inc				: std_logic;
-	signal env_vol				: std_logic_vector(4 downto 0);
+	signal env_vol				: std_logic_vector(4 downto 0) := (others=>'0');
 
 	signal tone_ena_l			: std_logic;
 	signal tone_src			: std_logic;
@@ -138,8 +138,8 @@ architecture RTL of YM2149 is
 	type	BUS_STATE_TYPE is ( nop0,AD0,nop1,RD,AD1,nop2,WR,AD2);
 begin
 	-- cpu i/f
-	p_busdecode            : process(I_BDIR, I_BC2, I_BC1, addr, I_A9_L, I_A8)
-		variable cs : std_logic;
+	p_busdecode : process(I_BDIR, I_BC2, I_BC1, addr, I_A9_L, I_A8)
+		variable cs  : std_logic;
 		variable sel : std_logic_vector(2 downto 0);
 	begin
 		-- BDIR BC2 BC1 MODE
@@ -375,12 +375,14 @@ begin
 		end if;
 	end process;
 
-	p_envelope_shape : process(env_reset, reg, CLK)
+	p_envelope_shape : process
 		variable is_bot		: boolean;
 		variable is_bot_p1	: boolean;
 		variable is_top_m1	: boolean;
 		variable is_top		: boolean;
 	begin
+		wait until rising_edge(CLK);
+
 		-- envelope shapes
 		-- C AtAlH
 		-- 0 0 x x  \___
@@ -402,6 +404,8 @@ begin
 		-- 1 1 1 0  /\/\
 		--
 		-- 1 1 1 1  /___
+
+		-- synchronous reset to avoid latch warning
 		if (env_reset = '1') then
 			-- load initial state
 			if (reg(13)(2) = '0') then -- attack
@@ -411,9 +415,11 @@ begin
 				env_vol <= (others => '0');
 				env_inc <= '1'; -- +1
 			end if;
+
 			env_hold <= '0';
 
-		elsif rising_edge(CLK) then
+		else
+
 			is_bot    := (env_vol = "00000");
 			is_bot_p1 := (env_vol = "00001");
 			is_top_m1 := (env_vol = "11110");

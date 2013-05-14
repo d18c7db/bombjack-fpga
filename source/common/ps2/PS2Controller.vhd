@@ -14,7 +14,7 @@ entity PS2Controller is
 		Send      : in     std_logic;
 		Command   : in     std_logic_vector(7 downto 0);
 		PS2Busy   : out    std_logic;
-		PS2Error  : buffer std_logic;
+		PS2Error  : out    std_logic;
 		DataReady : out    std_logic;
 		DataByte  : out    std_logic_vector(7 downto 0)
 	);
@@ -22,13 +22,13 @@ end PS2Controller;
 
 architecture Behavioral of PS2Controller is
 
-	constant ClockFreq     : natural := 20; -- MHz
+	constant ClockFreq     : natural :=  12; -- MHz
 	constant Time100us     : natural := 100 * ClockFreq;
-	constant Time20us      : natural := 20 * ClockFreq;
-	constant DebounceDelay : natural := 16;
+	constant Time20us      : natural :=  20 * ClockFreq;
+	constant DebounceDelay : natural :=  16;
 	
 	type StateType is (Idle, ReceiveData, InhibitComunication, RequestToSend, SendData, CheckAck, WaitRiseClock);
-	signal State            : StateType;
+	signal State            : StateType := InhibitComunication;
 	signal BitsRead         : natural range 0 to 10;
 	signal BitsSent         : natural range 0 to 10;
 	signal Byte             : std_logic_vector(7 downto 0);
@@ -41,6 +41,7 @@ architecture Behavioral of PS2Controller is
 	signal PS2DataOut       : std_logic;
 	signal PS2Data_Z        : std_logic;
 	signal PS2Data_D        : std_logic;	
+	signal PS2Error_int     : std_logic := '0';
 	signal TimeCounter      : natural range 0 to Time100us;
 
 begin
@@ -65,6 +66,7 @@ begin
 
 	PS2Clock <= PS2ClockOut when PS2Clock_Z <= '0' else 'Z';
 	PS2Data  <= PS2DataOut  when PS2Data_Z  <= '0' else 'Z';
+	PS2Error <= PS2Error_int;
 
 	process(Reset, Clock)
 	begin
@@ -77,7 +79,7 @@ begin
 			DReady <= '0';
 			DataByte <= (others => '0');
 			PS2Busy <= '0';
-			PS2Error <= '0';
+			PS2Error_int <= '0';
 			BitsRead <= 0;
 			BitsSent <= 0;
 			CountOnes <= '0';
@@ -92,7 +94,7 @@ begin
 					DataReady <= '0';
 					DReady <= '0';
 					BitsRead <= 0;
-					PS2Error <= '0';
+					PS2Error_int <= '0';
 					CountOnes <= '0';
 					if PS2Data_D = '0' then                  -- Start bit
 						PS2Busy <= '1';
@@ -117,19 +119,19 @@ begin
 								case CountOnes is
 									when '0' =>
 										if PS2Data_D = '0' then
-											PS2Error <= '1';	-- Error when CountOnes is even (0)
+											PS2Error_int <= '1';	-- Error when CountOnes is even (0)
 										else				    -- and parity bit is unasserted
-											PS2Error <= '0';
+											PS2Error_int <= '0';
 										end if;
 									when others =>
 										if PS2Data_D = '1' then
-											PS2Error <= '1';	-- Error when CountOnes is odd (1)
+											PS2Error_int <= '1';	-- Error when CountOnes is odd (1)
 										else				    -- and parity bit is asserted
-											PS2Error <= '0';
+											PS2Error_int <= '0';
 										end if;
 								end case;
 							when 10 =>							-- Stop bit
-								if PS2Error = '0' then
+								if PS2Error_int = '0' then
 									DataByte <= Byte;
 									DReady <= '1';
 								else
@@ -189,7 +191,7 @@ begin
 					PS2Data_Z <= '1';
 					if PS2ClockPrevious = '1' and PS2Clock_D = '0' then
 						if PS2Data_D = '1' then -- no Acknowledge received
-							PS2Error <= '1';
+							PS2Error_int <= '1';
 						end if;
 						State <= WaitRiseClock;
 					end if;

@@ -22,8 +22,9 @@ library ieee;
 
 entity switches is
 	port (
+		I_CLK_12M    : in  std_logic;
+		I_CLK_6M_EN  : in  std_logic;
 		I_AB         : in  std_logic_vector(2 downto 0);
-		I_CLK        : in  std_logic;
 		I_DB0        : in  std_logic;
 		I_CS_B000_n  : in  std_logic;
 		I_MERD_n     : in  std_logic;
@@ -52,18 +53,20 @@ begin
 	-- chip 3N6 moved to p9 audio board
 
 	-- chips 3S page 2
-	U3S5 : process(I_CLK)
+	U3S5 : process
 	begin
-		if rising_edge(I_CLK) then
+		wait until rising_edge(I_CLK_12M);
+		if I_CLK_6M_EN = '1' then
 			if s_b0045wr_n = '0' then
 				O_FLIP <= I_DB0;
 			end if;
 		end if;
 	end process;
 
-	U3S9 : process(I_CLK)
+	U3S9 : process
 	begin
-		if rising_edge(I_CLK) then
+		wait until rising_edge(I_CLK_12M);
+		if I_CLK_6M_EN = '1' then
 			if s_b0001wr_n = '0' then
 				O_NMION <= I_DB0;
 			end if;

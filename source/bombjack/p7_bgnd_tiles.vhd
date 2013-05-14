@@ -20,6 +20,7 @@ use ieee.std_logic_1164.all;
 
 entity bgnd_tiles is
 	port ( 
+		I_CLK_12M			: in  std_logic;
 		I_CLK_6M_EN			: in  std_logic;
 		I_CS_9E00_n			: in  std_logic;
 		I_MEWR_n				: in  std_logic;
@@ -63,16 +64,18 @@ architecture RTL of bgnd_tiles is
 	signal s_5R3				: std_logic := '0';
 	signal s_bv_s1_s0			: std_logic_vector( 1 downto 0) := (others => '0');
 	signal s_bv_s1				: std_logic := '0';
+	signal s_sload_n_t1		: std_logic := '0';
 
 begin
 	-- chip 5P6 page 7
 	s_9e00_wr_n <= I_CS_9E00_n or I_MEWR_n;
 
 	-- chip 4S page 7
-	U4S : process(I_CLK_6M_EN)
+	U4S : process
 	begin
-		if rising_edge(I_CLK_6M_EN) then
-			if s_9e00_wr_n= '0' then
+		wait until rising_edge(I_CLK_12M);
+		if I_CLK_6M_EN = '1' then
+			if s_9e00_wr_n = '0' then
 				s_4S_bus <= I_DB;
 			end if;
 		end if;
@@ -82,9 +85,10 @@ begin
 	s_kill <= not s_4S_bus(4);
 
 	-- chip 6S page 7
-	U6S7 : process(I_SL2_n)
+	U6S7 : process
 	begin
-		if rising_edge(I_SL2_n) then
+		wait until rising_edge(I_CLK_12M);
+		if (I_SL2_n = '0') then
 			s_6S_bus <= I_ROM_4P_DATA;
 		end if;
 	end process;
@@ -107,9 +111,10 @@ begin
 
 	s_bv_s1_s0 <= s_bv_s1 & s_5P3;
 	-- chips 7R, 7S, 7N, 7P, 7L, 7M page 7
-	shifters_pg7 : process(I_CLK_6M_EN)
+	shifters_pg7 : process
 	begin
-		if rising_edge(I_CLK_6M_EN) then
+		wait until rising_edge(I_CLK_12M);
+		if I_CLK_6M_EN = '1' then
 			case s_bv_s1_s0 is
 				when "11" =>			-- load
 					s_shifter_7R_7S <= I_ROM_8RNL_DATA(23 downto 16); -- 8R
@@ -132,11 +137,14 @@ begin
 --	s_5P8  <= I_CLK_6M_EN or I_SLOAD_n;
 
 	-- chip 5S page 7
-	U5S : process(I_SLOAD_n)
+	U5S : process
 	begin
-		if rising_edge(I_SLOAD_n) then
-				s_5S15 <= I_ROM_4P_DATA(6);
-				O_BC   <= I_ROM_4P_DATA(3 downto 0);
+		wait until falling_edge(I_CLK_12M);
+		s_sload_n_t1 <= I_SLOAD_n;
+		-- detect rising edge of I_SLOAD_n
+		if (I_SLOAD_n = '1' and s_sload_n_t1 = '0') then
+			s_5S15 <= I_ROM_4P_DATA(6);
+			O_BC   <= I_ROM_4P_DATA(3 downto 0);
 		end if;
 	end process;
 
