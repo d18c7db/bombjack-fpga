@@ -123,7 +123,7 @@ architecture RTL of YM2149 is
 	signal env_ena				: std_logic;
 	signal env_hold			: std_logic;
 	signal env_inc				: std_logic;
-	signal env_vol				: std_logic_vector(4 downto 0) := (others=>'0');
+	signal env_vol				: std_logic_vector(4 downto 0);
 
 	signal tone_ena_l			: std_logic;
 	signal tone_src			: std_logic;

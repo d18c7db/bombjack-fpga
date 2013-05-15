@@ -92,75 +92,22 @@ architecture RTL of VGA_SCANCONV is
 	--
 	-- input timing
 	--
-	signal ihsync_last	: std_logic := '0';
-	signal ivsync_last	: std_logic := '0';
-	signal hpos_i			: std_logic_vector( 8 downto 0) := (others => '0');
+	signal ivsync_last_x4	: std_logic := '1';
+	signal ihsync_last		: std_logic := '1';
+	signal ivsync_last		: std_logic := '1';
+	signal hpos_i				: std_logic_vector( 9 downto 0) := (others => '0');
 
 	--
 	-- output timing
 	--
 	signal ovsync_last	: std_logic := '0';
-	signal hpos_o			: std_logic_vector( 9 downto 0) := (others => '0');
+	signal hpos_o			: std_logic_vector(10 downto 0) := (others => '0');
 
-	signal vcnti			: integer range 0 to 1023 := 0;
 	signal vcnt				: integer range 0 to 1023 := 0;
 	signal hcnt				: integer range 0 to 1023 := 0;
+	signal hcnti			: integer range 0 to 1023 := 0;
 
-	signal bank				: std_logic := '0';
-	signal bank_n			: std_logic := '1';
-
---pragma translate_off
-	type binary_file is file of character;
-
-	signal qidx				: std_logic_vector( 7 downto 0) := (others => '0');
-	file qfile				: binary_file; -- open WRITE_MODE is in "..\build\qvga0.ppm";
-
---pragma translate_on
 begin
--- debug: write input video to .ppm format files
--- pragma translate_off
-
-	p_debug : process
-		variable rising_h		: boolean;
-		variable rising_v		: boolean;
-		variable armed			: boolean;
-		variable s				: line; -- debug
-	begin
-		wait until rising_edge(CLK);
-		rising_h  := (I_HSYNC = '1') and (ihsync_last = '0');
-		rising_v  := (I_VSYNC = '1') and (ivsync_last = '0');
-
-		if rising_v then					-- at start of frame
-			armed := true;
-		end if;
-
-		if rising_h and armed then		-- at start of frame
-			armed := false;
-			qidx <= qidx + 1;				-- frame number
-			file_close(qfile);
-			write(s,"..\build\qvga"); write(s, conv_integer(qidx)); write(s,".ppm");
-			file_open(qfile, s.all, WRITE_MODE);
-			writeline(output,s);
-			-- the resolution here is not the game native resolution, it is the total number of scan lines
-			-- and total number of pixels per scan line including all the blank space on front and back porch
-			write(qfile, 'P'); write(qfile, '6'); write(qfile, ' ');								--  P6 = binary file, color
-			write(qfile, '3'); write(qfile, '5'); write(qfile, '2'); write(qfile, ' ');	-- 352 = vert resolution
-			write(qfile, '2'); write(qfile, '5'); write(qfile, '6'); write(qfile, ' ');	-- 256 = horiz resolution
-			write(qfile, '1'); write(qfile, '5'); write(qfile, lf );								--  15 = max color index
---			write(s,"# "); write(s, now);	-- sim time as comment
-		end if;
-
-		if (I_HSYNC = '1' and I_VSYNC = '1') then
-			write(qfile, CHARACTER'VAL( conv_integer(I_VIDEO(11 downto 8) & x"0")) ); -- R
-			write(qfile, CHARACTER'VAL( conv_integer(I_VIDEO( 7 downto 4) & x"0")) ); -- G
-			write(qfile, CHARACTER'VAL( conv_integer(I_VIDEO( 3 downto 0) & x"0")) ); -- B
-		end if;
-	end process;
-
--- pragma translate_on
-
-	bank_n <= not bank;
-
 	-- dual port line buffer, max line of 512 pixels
 	u_ram : RAMB16_S18_S18
 		generic map (INIT_A => X"00000", INIT_B => X"00000", SIM_COLLISION_CHECK => "NONE")  -- "NONE", "WARNING", "GENERATE_X_ONLY", "ALL"
@@ -170,35 +117,26 @@ begin
 			DIA					=> I_VIDEO,
 			DOPA					=> open,
 			DIPA					=> "00",
-			ADDRA(9)				=> bank,
-			ADDRA(8 downto 0)	=> hpos_i,
+			ADDRA					=> hpos_i,
 			WEA					=> '1',
 			ENA					=> '1',
 			SSRA					=> '0',
-			CLKA					=> CLK_X4,
+			CLKA					=> CLK,
 
 			-- output
 			DOB					=> O_VIDEO,
 			DIB					=> x"0000",
 			DOPB					=> open,
 			DIPB					=> "00",
-			ADDRB(9)				=> bank_n,
-			ADDRB(8 downto 0)	=> hpos_o(9 downto 1),
+			ADDRB					=> hpos_o(10 downto 1),
 			WEB					=> '0',
 			ENB					=> '1',
 			SSRB					=> '0',
 			CLKB					=> CLK_X4
 		);
 
-	-- alternate RAM banks every new horizontal line
-	p_bank : process
-	begin
-		wait until falling_edge(I_HSYNC);
-		bank <= not bank;
-	end process;
-
-	-- vertical counter for input video
-	p_vcounter : process
+	-- horizontal counter for input video
+	p_hcounter : process
 	begin
 		wait until rising_edge(CLK);
 		ihsync_last <= I_HSYNC;
@@ -206,9 +144,9 @@ begin
 
 		-- trigger off rising hsync
 		if I_HSYNC = '1' and ihsync_last = '0' then
-			vcnti <= 0;
+			hcnti <= 0;
 		else
-			vcnti <= vcnti + 1;
+			hcnti <= hcnti + 1;
 		end if;
 	end process;
 
@@ -217,20 +155,24 @@ begin
 	begin
 		wait until rising_edge(CLK);
 
-		if (vcnti < cstart) or (vcnti > (cstart + clength)) then
+		if (hcnti < cstart) or (hcnti > (cstart + clength)) then
 			hpos_i <= (others => '0');
 		else
 			hpos_i <= hpos_i + 1;
 		end if;
 	end process;
 
-	-- VGA H and V counters, synchronized to input frame V sync
+	-- VGA H and V counters, synchronized to input frame V sync, then H sync
 	p_out_ctrs : process
+		variable trigger : boolean;
 	begin
 		wait until rising_edge(CLK_X4);
-		ovsync_last <= I_VSYNC;
+		ivsync_last_x4 <= I_VSYNC;
 
-		if (I_VSYNC = '0') and (ovsync_last = '1') then
+		if (I_VSYNC = '0') and (ivsync_last_x4 = '1') then
+			trigger := true;
+		elsif trigger and I_HSYNC = '0' then
+			trigger := false;
 			hcnt <= 0;
 			vcnt <= 0;
 		else

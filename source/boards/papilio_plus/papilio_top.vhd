@@ -272,50 +272,49 @@ begin
 -- ScanCode(9)          : 1 = Extended  0 = Regular
 -- ScanCode(8)          : 1 = Break     0 = Make
 -- ScanCode(7 downto 0) : Key Code
-	process(clk_12M)
+	process
 	begin
-		if rising_edge(clk_12M) then
-			if ext_reset = '1' then
-				p1_start <= '0';
-				p1_coin  <= '0';
-				p1_jump  <= '0';
-				p1_down  <= '0';
-				p1_up    <= '0';
-				p1_left  <= '0';
-				p1_right <= '0';
-				p2_start <= '0';
-				p2_coin  <= '0';
-				p2_jump  <= '0';
-				p2_down  <= '0';
-				p2_up    <= '0';
-				p2_left  <= '0';
-				p2_right <= '0';
-			elsif (ps2_codeready = '1') then
-				case (ps2_scancode(7 downto 0)) is
-					when x"05" =>	p1_coin  <= not ps2_scancode(8);     -- P1 coin "F1"
-					when x"04" =>	p2_coin  <= not ps2_scancode(8);     -- P2 coin "F3"
+		wait until rising_edge(clk_12M);
+		if ext_reset = '1' then
+			p1_start <= '0';
+			p1_coin  <= '0';
+			p1_jump  <= '0';
+			p1_down  <= '0';
+			p1_up    <= '0';
+			p1_left  <= '0';
+			p1_right <= '0';
+			p2_start <= '0';
+			p2_coin  <= '0';
+			p2_jump  <= '0';
+			p2_down  <= '0';
+			p2_up    <= '0';
+			p2_left  <= '0';
+			p2_right <= '0';
+		elsif (ps2_codeready = '1') then
+			case (ps2_scancode(7 downto 0)) is
+				when x"05" =>	p1_coin  <= not ps2_scancode(8);     -- P1 coin "F1"
+				when x"04" =>	p2_coin  <= not ps2_scancode(8);     -- P2 coin "F3"
 
-					when x"06" =>	p1_start <= not ps2_scancode(8);     -- P1 start "F2"
-					when x"0c" =>	p2_start <= not ps2_scancode(8);     -- P2 start "F4"
+				when x"06" =>	p1_start <= not ps2_scancode(8);     -- P1 start "F2"
+				when x"0c" =>	p2_start <= not ps2_scancode(8);     -- P2 start "F4"
 
-					when x"43" =>	p1_jump  <= not ps2_scancode(8);     -- P1 jump "I"
-										p2_jump  <= not ps2_scancode(8);     -- P2 jump "I"
+				when x"43" =>	p1_jump  <= not ps2_scancode(8);     -- P1 jump "I"
+									p2_jump  <= not ps2_scancode(8);     -- P2 jump "I"
 
-					when x"75" =>	p1_up    <= not ps2_scancode(8);     -- P1 up arrow
-										p2_up  	<= not ps2_scancode(8);     -- P2 up arrow
+				when x"75" =>	p1_up    <= not ps2_scancode(8);     -- P1 up arrow
+									p2_up  	<= not ps2_scancode(8);     -- P2 up arrow
 
-					when x"72" =>	p1_down  <= not ps2_scancode(8);     -- P1 down arrow
-										p2_down  <= not ps2_scancode(8);     -- P2 down arrow
+				when x"72" =>	p1_down  <= not ps2_scancode(8);     -- P1 down arrow
+									p2_down  <= not ps2_scancode(8);     -- P2 down arrow
 
-					when x"6b" =>	p1_left  <= not ps2_scancode(8);     -- P1 left arrow
-										p2_left  <= not ps2_scancode(8);     -- P2 left arrow
+				when x"6b" =>	p1_left  <= not ps2_scancode(8);     -- P1 left arrow
+									p2_left  <= not ps2_scancode(8);     -- P2 left arrow
 
-					when x"74" =>	p1_right <= not ps2_scancode(8);     -- P1 right arrow
-										p2_right <= not ps2_scancode(8);     -- P2 right arrow
+				when x"74" =>	p1_right <= not ps2_scancode(8);     -- P1 right arrow
+									p2_right <= not ps2_scancode(8);     -- P2 right arrow
 
-					when others => null;
-				end case;
-			end if;
+				when others => null;
+			end case;
 		end if;
 	end process;
 
@@ -452,12 +451,12 @@ begin
 	-- all the video signals are in syc with each other as they are derived from vcount and hcount.
 	-- hcount is free running off the 6Mhz clock and vcount is clocked off hcount's MSB (256H)
 	-- because of that we can rely on ram_state_ctr to identify what signal is active and when
-	-- /MDL is low when ram_state_ctr   =  4, 5, 6, 7, 8, 9, a, b
-	-- /SL1 is low when ram_state_ctr   =  8, 9, a, b, c, d, e, f
-	-- /CDL is low when ram_state_ctr   = 14,15,16,17,18,19,1a,1b
-	-- /SL2 is low when ram_state_ctr   = 18,19,1a,1b,1c,1d,1e,1f
-	-- /VPL is low when ram_state_ctr   = 24,25,26,27,28,29,2a,2b
-	-- /SLOAD is low when ram_state_ctr = 38,39,3a,3b,3c,3d,3e,3f
+	-- /MDL is low when ram_state_ctr   =  9, a, b, c
+	-- /SL1 is low when ram_state_ctr   =  9, a, b, c
+	-- /CDL is low when ram_state_ctr   = 19,1a,1b,1c
+	-- /SL2 is low when ram_state_ctr   = 19,1a,1b,1c
+	-- /VPL is low when ram_state_ctr   = 29,2a,2b,2c
+	-- /SLOAD is low when ram_state_ctr = 37,38,39,3a,3b,3c,3d,3e
 
 	-- TIMING CHECKS from simulation
 	-- background generator - 4P latched @0 and again @20, 8RNL latched @0
@@ -465,111 +464,109 @@ begin
 	-- sprite generator     - 7JLM address always stable from rise of /VPL @2C to rise of /SLOAD @00
 
 	-- sync the state machine to rising edge of /CMPBLK and advance 
-	ram_state : process(clk_48M, s_cmpblk_n)
+	ram_state : process
 	begin
-		if rising_edge(clk_48M) then
-			s_cmpblk_n_t1 <= s_cmpblk_n;
-			-- rising edge of s_cmpblk_n
-			if (s_cmpblk_n = '1') and (s_cmpblk_n_t1 = '0') then
-				ram_state_ctr <= (others => '0');
-			else
-				ram_state_ctr <= ram_state_ctr + 1;
-			end if;
+		wait until falling_edge(clk_48M);
+		s_cmpblk_n_t1 <= s_cmpblk_n;
+		-- rising edge of s_cmpblk_n
+		if (s_cmpblk_n = '1') and (s_cmpblk_n_t1 = '0') then
+			ram_state_ctr <= (others => '0');
+		else
+			ram_state_ctr <= ram_state_ctr + 1;
 		end if;
 	end process;
 
 	-- perform a SRAM read from a specific address depending on which state we're currently in
-	ram_read : process(clk_48M)
+	ram_read : process
 	begin
-		if falling_edge(clk_48M) then
-			case ram_state_ctr is
-				when "000000" =>	-- 00 /SLOAD goes high
-					user_A <= sel_4P & o_rom_4P_addr;
-				when "000001" =>	-- 01
-					if o_rom_4P_ena ='1' then i_rom_4P_data <= user_Din; else i_rom_4P_data <= (others => '0'); end if;
---				when "000010" =>	-- 02
---				when "000011" =>	-- 03
---				when "000100" =>	-- 04 /MDL goes low
---				when "000101" =>	-- 05
---				when "000110" =>	-- 06
---				when "000111" =>	-- 07
---				when "001000" =>	-- 08 /SL1 goes low
---				when "001001" =>	-- 09
---				when "001010" =>	-- 0a
---				when "001011" =>	-- 0b
---				when "001100" =>	-- 0c /MDL goes high
---				when "001101" =>	-- 0d
---				when "001110" =>	-- 0e
---				when "001111" =>	-- 0f
---				when "010000" =>	-- 10 /SL1 goes high
---				when "010001" =>	-- 11
---				when "010010" =>	-- 12
---				when "010011" =>	-- 13
---				when "010100" =>	-- 14 /CDL goes low
---				when "010101" =>	-- 15
---				when "010110" =>	-- 16
---				when "010111" =>	-- 17
---				when "011000" =>	-- 18 /SL2 goes low
---				when "011001" =>	-- 19
---				when "011010" =>	-- 1a
---				when "011011" =>	-- 1b
---				when "011100" =>	-- 1c /CDL goes high
---				when "011101" =>	-- 1d
---				when "011110" =>	-- 1e
---				when "011111" =>	-- 1f
-				when "100000" =>	-- 20 /SL2 goes high
-					user_A <= sel_4P & o_rom_4P_addr;
-				when "100001" =>	-- 21
-					if o_rom_4P_ena ='1' then i_rom_4P_data <= user_Din; else i_rom_4P_data <= (others => '0'); end if;
---				when "100010" =>	-- 22
---				when "100011" =>	-- 23
---				when "100100" =>	-- 24 /VPL goes low
---				when "100101" =>	-- 25
---				when "100110" =>	-- 26
---				when "100111" =>	-- 27
---				when "101000" =>	-- 28
-				when "101001" =>	-- 29
-					user_A <= sel_8R & o_rom_8RNL_addr;
-				when "101010" =>	-- 2a
-					if o_rom_8RNL_ena ='1' then i_rom_8RNL_data(23 downto 16) <= user_Din; else i_rom_8RNL_data(23 downto 16) <= (others => '0'); end if;
-					user_A <= sel_8N & o_rom_8RNL_addr;
-				when "101011" =>	-- 2b
-					if o_rom_8RNL_ena ='1' then i_rom_8RNL_data(15 downto  8) <= user_Din; else i_rom_8RNL_data(15 downto  8) <= (others => '0'); end if;
-					user_A <= sel_8L & o_rom_8RNL_addr;
-				when "101100" =>	-- 2c /VPL goes high
-					if o_rom_8RNL_ena ='1' then i_rom_8RNL_data( 7 downto  0) <= user_Din; else i_rom_8RNL_data( 7 downto  0) <= (others => '0'); end if;
-					user_A <= sel_8K & o_rom_8KHE_addr;
-				when "101101" =>	-- 2d
-					if o_rom_8KHE_ena ='1' then i_rom_8KHE_data(23 downto 16) <= user_Din; else i_rom_8KHE_data(23 downto 16) <= (others => '0'); end if;
-					user_A <= sel_8H & o_rom_8KHE_addr;
-				when "101110" =>	-- 2e
-					if o_rom_8KHE_ena ='1' then i_rom_8KHE_data(15 downto  8) <= user_Din; else i_rom_8KHE_data(15 downto  8) <= (others => '0'); end if;
-					user_A <= sel_8E & o_rom_8KHE_addr;
-				when "101111" =>	-- 2f
-					if o_rom_8KHE_ena ='1' then i_rom_8KHE_data( 7 downto  0) <= user_Din; else i_rom_8KHE_data( 7 downto  0) <= (others => '0'); end if;
-					user_A <= sel_7J & o_rom_7JLM_addr;
-				when "110000" =>	-- 30
-					i_rom_7JLM_data(23 downto 16) <= user_Din;
-					user_A <= sel_7L & o_rom_7JLM_addr;
-				when "110001" =>	-- 31
-					i_rom_7JLM_data(15 downto  8) <= user_Din;
-					user_A <= sel_7M & o_rom_7JLM_addr;
-				when "110010" =>	-- 32
-					i_rom_7JLM_data( 7 downto  0) <= user_Din;
---				when "110011" =>	-- 33
---				when "110100" =>	-- 34
---				when "110101" =>	-- 35
---				when "110110" =>	-- 36
---				when "110111" =>	-- 37
---				when "111000" =>	-- 38 /SLOAD goes low
---				when "111001" =>	-- 39
---				when "111010" =>	-- 3a
---				when "111011" =>	-- 3b
---				when "111101" =>	-- 3d
---				when "111110" =>	-- 3e
---				when "111111" =>	-- 3f
-				when others   => null;
-			end case;
-		end if;
+		wait until falling_edge(clk_48M);
+		case ram_state_ctr is
+			when "000000" =>	-- 00 /SLOAD goes high
+				user_A <= sel_4P & o_rom_4P_addr;
+			when "000001" =>	-- 01
+				if o_rom_4P_ena ='1' then i_rom_4P_data <= user_Din; else i_rom_4P_data <= (others => '0'); end if;
+--			when "000010" =>	-- 02
+--			when "000011" =>	-- 03
+--			when "000100" =>	-- 04 /MDL goes low
+--			when "000101" =>	-- 05
+--			when "000110" =>	-- 06
+--			when "000111" =>	-- 07
+--			when "001000" =>	-- 08 /SL1 goes low
+--			when "001001" =>	-- 09
+--			when "001010" =>	-- 0a
+--			when "001011" =>	-- 0b
+--			when "001100" =>	-- 0c /MDL goes high
+--			when "001101" =>	-- 0d
+--			when "001110" =>	-- 0e
+--			when "001111" =>	-- 0f
+--			when "010000" =>	-- 10 /SL1 goes high
+--			when "010001" =>	-- 11
+--			when "010010" =>	-- 12
+--			when "010011" =>	-- 13
+--			when "010100" =>	-- 14 /CDL goes low
+--			when "010101" =>	-- 15
+--			when "010110" =>	-- 16
+--			when "010111" =>	-- 17
+--			when "011000" =>	-- 18 /SL2 goes low
+--			when "011001" =>	-- 19
+--			when "011010" =>	-- 1a
+--			when "011011" =>	-- 1b
+--			when "011100" =>	-- 1c /CDL goes high
+--			when "011101" =>	-- 1d
+--			when "011110" =>	-- 1e
+--			when "011111" =>	-- 1f
+			when "100000" =>	-- 20 /SL2 goes high
+				user_A <= sel_4P & o_rom_4P_addr;
+			when "100001" =>	-- 21
+				if o_rom_4P_ena ='1' then i_rom_4P_data <= user_Din; else i_rom_4P_data <= (others => '0'); end if;
+--			when "100010" =>	-- 22
+--			when "100011" =>	-- 23
+--			when "100100" =>	-- 24 /VPL goes low
+--			when "100101" =>	-- 25
+--			when "100110" =>	-- 26
+--			when "100111" =>	-- 27
+--			when "101000" =>	-- 28
+			when "101001" =>	-- 29
+				user_A <= sel_8R & o_rom_8RNL_addr;
+			when "101010" =>	-- 2a
+				if o_rom_8RNL_ena ='1' then i_rom_8RNL_data(23 downto 16) <= user_Din; else i_rom_8RNL_data(23 downto 16) <= (others => '0'); end if;
+				user_A <= sel_8N & o_rom_8RNL_addr;
+			when "101011" =>	-- 2b
+				if o_rom_8RNL_ena ='1' then i_rom_8RNL_data(15 downto  8) <= user_Din; else i_rom_8RNL_data(15 downto  8) <= (others => '0'); end if;
+				user_A <= sel_8L & o_rom_8RNL_addr;
+			when "101100" =>	-- 2c /VPL goes high
+				if o_rom_8RNL_ena ='1' then i_rom_8RNL_data( 7 downto  0) <= user_Din; else i_rom_8RNL_data( 7 downto  0) <= (others => '0'); end if;
+				user_A <= sel_8K & o_rom_8KHE_addr;
+			when "101101" =>	-- 2d
+				if o_rom_8KHE_ena ='1' then i_rom_8KHE_data(23 downto 16) <= user_Din; else i_rom_8KHE_data(23 downto 16) <= (others => '0'); end if;
+				user_A <= sel_8H & o_rom_8KHE_addr;
+			when "101110" =>	-- 2e
+				if o_rom_8KHE_ena ='1' then i_rom_8KHE_data(15 downto  8) <= user_Din; else i_rom_8KHE_data(15 downto  8) <= (others => '0'); end if;
+				user_A <= sel_8E & o_rom_8KHE_addr;
+			when "101111" =>	-- 2f
+				if o_rom_8KHE_ena ='1' then i_rom_8KHE_data( 7 downto  0) <= user_Din; else i_rom_8KHE_data( 7 downto  0) <= (others => '0'); end if;
+				user_A <= sel_7J & o_rom_7JLM_addr;
+			when "110000" =>	-- 30
+				i_rom_7JLM_data(23 downto 16) <= user_Din;
+				user_A <= sel_7L & o_rom_7JLM_addr;
+			when "110001" =>	-- 31
+				i_rom_7JLM_data(15 downto  8) <= user_Din;
+				user_A <= sel_7M & o_rom_7JLM_addr;
+			when "110010" =>	-- 32
+				i_rom_7JLM_data( 7 downto  0) <= user_Din;
+--			when "110011" =>	-- 33
+--			when "110100" =>	-- 34
+--			when "110101" =>	-- 35
+--			when "110110" =>	-- 36
+--			when "110111" =>	-- 37
+--			when "111000" =>	-- 38 /SLOAD goes low
+--			when "111001" =>	-- 39
+--			when "111010" =>	-- 3a
+--			when "111011" =>	-- 3b
+--			when "111101" =>	-- 3d
+--			when "111110" =>	-- 3e
+--			when "111111" =>	-- 3f
+			when others   => null;
+		end case;
 	end process;
 end RTL;
