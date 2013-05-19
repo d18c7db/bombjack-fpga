@@ -163,10 +163,10 @@ architecture RTL of PAPILIO_TOP is
 	signal s_audio				: std_logic_vector( 7 downto 0) := (others => '0');
 
 	signal s_cmpblk_n			: std_logic := '1';
-	signal s_cmpblk_n_t1	: std_logic := '1';
 	signal s_dac_out			: std_logic := '1';
 
 	signal s_hsync_n			: std_logic := '1';
+	signal s_hsync_n_t1		: std_logic := '1';
 	signal s_vsync_n			: std_logic := '1';
 
 	signal ps2_codeready		: std_logic := '1';
@@ -397,22 +397,26 @@ begin
 	-- video scan converter required to display video on VGA hardware
 	-----------------------------------------------------------------
 	-- game native resolution 224x256
-	-- take note: the values below are relative to the CLK_X4 period not standard VGA clock period
+	-- take note: the values below are relative to the CLK period not standard VGA clock period
 	scan_conv : entity work.VGA_SCANCONV
 	generic map (
-		hA				=>  16,	-- h front porch
-		hB				=>  92,	-- h sync
-		hC				=>  46,	-- h back porch
-		hres			=> 512,	-- visible video
-		hpad			=>  51,	-- padding either side to reach standard VGA resolution (hres + 2*hpad = hD)
-
-		vB				=>   2,	-- v sync
-		vC				=>  32,	-- v back porch
-		vres			=> 448,	-- visible video
-		vpad			=>  16,	-- padding either side to reach standard VGA resolution (vres + vpad = vD)
-
+		-- mark active area of input video
 		cstart      =>  56,  -- composite sync start
-		clength     => 256   -- composite sync length
+		clength     => 256,  -- composite sync length
+
+		-- output video timing
+		hA				=>  41,	-- h front porch
+		hB				=>  46,	-- h sync
+		hC				=>  41,	-- h back porch
+		hD				=> 256,	-- visible video
+
+--		vA				=>   8,	-- v front porch (not used)
+		vB				=>   2,	-- v sync
+		vC				=>  22,	-- v back porch
+		vD				=> 224,	-- visible video
+
+		hpad			=>   0,	-- create H black border
+		vpad			=>   0	-- create V black border
 	)
 	port map (
 		I_VIDEO(15 downto 12)=> "0000",
@@ -428,9 +432,10 @@ begin
 		O_VIDEO( 3 downto 0) => VideoB,
 		O_HSYNC					=> HSync,
 		O_VSYNC					=> VSync,
+		O_CMPBLK_N				=> open,
 		--
 		CLK						=> clk_6M_en,
-		CLK_X4					=> clk_24M
+		CLK_X2					=> clk_12M
 	);
 
 	----------------------
@@ -448,28 +453,20 @@ begin
 	-- by reading the external SRAM on a 48Mhz clock and presenting the data just in time to the video circuitry which
 	-- thinks it's accessing 10 discrete ROM chips
 
-	-- all the video signals are in syc with each other as they are derived from vcount and hcount.
+	-- all the video signals are in sync with each other because they are derived from vcount and hcount.
 	-- hcount is free running off the 6Mhz clock and vcount is clocked off hcount's MSB (256H)
-	-- because of that we can rely on ram_state_ctr to identify what signal is active and when
-	-- /MDL is low when ram_state_ctr   =  9, a, b, c
-	-- /SL1 is low when ram_state_ctr   =  9, a, b, c
-	-- /CDL is low when ram_state_ctr   = 19,1a,1b,1c
-	-- /SL2 is low when ram_state_ctr   = 19,1a,1b,1c
-	-- /VPL is low when ram_state_ctr   = 29,2a,2b,2c
-	-- /SLOAD is low when ram_state_ctr = 37,38,39,3a,3b,3c,3d,3e
+	-- because of that, we can rely on ram_state_ctr to identify what signal is active and when
 
-	-- TIMING CHECKS from simulation
-	-- background generator - 4P latched @0 and again @20, 8RNL latched @0
-	-- character generator  - 8KHE can be read as early as state @20 because T0,T1,T2 only ever change at @0 and 5L is latched @10 and 4L is latched @20
-	-- sprite generator     - 7JLM address always stable from rise of /VPL @2C to rise of /SLOAD @00
+	-- the output of ROM 4P is latched at the rise of /SLOAD but also at the rise of /SL2
+	-- all other ROM outputs are latched at the rise of /SLOAD
 
-	-- sync the state machine to rising edge of /CMPBLK and advance 
+	-- sync the state machine to falling edge of /HSYNC and advance 
 	ram_state : process
 	begin
-		wait until falling_edge(clk_48M);
-		s_cmpblk_n_t1 <= s_cmpblk_n;
-		-- rising edge of s_cmpblk_n
-		if (s_cmpblk_n = '1') and (s_cmpblk_n_t1 = '0') then
+		wait until rising_edge(clk_48M);
+		s_hsync_n_t1 <= s_hsync_n;
+		-- rising edge of s_hsync_n
+		if (s_hsync_n = '1') and (s_hsync_n_t1 = '0') then
 			ram_state_ctr <= (others => '0');
 		else
 			ram_state_ctr <= ram_state_ctr + 1;
@@ -481,49 +478,49 @@ begin
 	begin
 		wait until falling_edge(clk_48M);
 		case ram_state_ctr is
-			when "000000" =>	-- 00 /SLOAD goes high
+			when "000000" =>	-- 00
 				user_A <= sel_4P & o_rom_4P_addr;
 			when "000001" =>	-- 01
 				if o_rom_4P_ena ='1' then i_rom_4P_data <= user_Din; else i_rom_4P_data <= (others => '0'); end if;
 --			when "000010" =>	-- 02
 --			when "000011" =>	-- 03
---			when "000100" =>	-- 04 /MDL goes low
+--			when "000100" =>	-- 04
 --			when "000101" =>	-- 05
---			when "000110" =>	-- 06
+--			when "000110" =>	-- 06 /MDL latches data into 6F
 --			when "000111" =>	-- 07
---			when "001000" =>	-- 08 /SL1 goes low
+--			when "001000" =>	-- 08
 --			when "001001" =>	-- 09
 --			when "001010" =>	-- 0a
 --			when "001011" =>	-- 0b
---			when "001100" =>	-- 0c /MDL goes high
+--			when "001100" =>	-- 0c
 --			when "001101" =>	-- 0d
---			when "001110" =>	-- 0e
+--			when "001110" =>	-- 0e /SL1 latches data into 5L
 --			when "001111" =>	-- 0f
---			when "010000" =>	-- 10 /SL1 goes high
+--			when "010000" =>	-- 10
 --			when "010001" =>	-- 11
 --			when "010010" =>	-- 12
 --			when "010011" =>	-- 13
---			when "010100" =>	-- 14 /CDL goes low
+--			when "010100" =>	-- 14
 --			when "010101" =>	-- 15
---			when "010110" =>	-- 16
+--			when "010110" =>	-- 16 /CDL latches data into 6E
 --			when "010111" =>	-- 17
---			when "011000" =>	-- 18 /SL2 goes low
+--			when "011000" =>	-- 18
 --			when "011001" =>	-- 19
 --			when "011010" =>	-- 1a
 --			when "011011" =>	-- 1b
---			when "011100" =>	-- 1c /CDL goes high
+--			when "011100" =>	-- 1c
 --			when "011101" =>	-- 1d
---			when "011110" =>	-- 1e
+--			when "011110" =>	-- 1e /SL2 latches data into 4L and 6S
 --			when "011111" =>	-- 1f
-			when "100000" =>	-- 20 /SL2 goes high
+			when "100000" =>	-- 20
 				user_A <= sel_4P & o_rom_4P_addr;
 			when "100001" =>	-- 21
 				if o_rom_4P_ena ='1' then i_rom_4P_data <= user_Din; else i_rom_4P_data <= (others => '0'); end if;
 --			when "100010" =>	-- 22
 --			when "100011" =>	-- 23
---			when "100100" =>	-- 24 /VPL goes low
+--			when "100100" =>	-- 24
 --			when "100101" =>	-- 25
---			when "100110" =>	-- 26
+--			when "100110" =>	-- 26 /VPL latches data into 5H
 --			when "100111" =>	-- 27
 --			when "101000" =>	-- 28
 			when "101001" =>	-- 29
@@ -534,7 +531,7 @@ begin
 			when "101011" =>	-- 2b
 				if o_rom_8RNL_ena ='1' then i_rom_8RNL_data(15 downto  8) <= user_Din; else i_rom_8RNL_data(15 downto  8) <= (others => '0'); end if;
 				user_A <= sel_8L & o_rom_8RNL_addr;
-			when "101100" =>	-- 2c /VPL goes high
+			when "101100" =>	-- 2c
 				if o_rom_8RNL_ena ='1' then i_rom_8RNL_data( 7 downto  0) <= user_Din; else i_rom_8RNL_data( 7 downto  0) <= (others => '0'); end if;
 				user_A <= sel_8K & o_rom_8KHE_addr;
 			when "101101" =>	-- 2d
@@ -559,10 +556,11 @@ begin
 --			when "110101" =>	-- 35
 --			when "110110" =>	-- 36
 --			when "110111" =>	-- 37
---			when "111000" =>	-- 38 /SLOAD goes low
+--			when "111000" =>	-- 38
 --			when "111001" =>	-- 39
 --			when "111010" =>	-- 3a
 --			when "111011" =>	-- 3b
+--			when "111100" =>	-- 3c /SLOAD latches data into shifters
 --			when "111101" =>	-- 3d
 --			when "111110" =>	-- 3e
 --			when "111111" =>	-- 3f

@@ -16,155 +16,155 @@
 
   <files>
     <file xil_pn:name="source/boards/papilio_plus/papilio_top.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="1"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="36"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="35"/>
     </file>
     <file xil_pn:name="source/boards/papilio_plus/bootstrap.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="2"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="34"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="34"/>
     </file>
     <file xil_pn:name="source/boards/papilio_plus/spi_flash.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="3"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="28"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="28"/>
     </file>
     <file xil_pn:name="source/common/scan_converter.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="4"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="29"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="29"/>
     </file>
     <file xil_pn:name="source/common/dac.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="5"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="31"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="31"/>
     </file>
     <file xil_pn:name="source/common/PS2/Debouncer.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="6"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="8"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="8"/>
     </file>
     <file xil_pn:name="source/common/PS2/Keyboard.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="7"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="30"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="30"/>
     </file>
     <file xil_pn:name="source/common/PS2/KeyboardMapper.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="8"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="17"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="17"/>
     </file>
     <file xil_pn:name="source/common/PS2/PS2Controller.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="9"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="16"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="16"/>
     </file>
     <file xil_pn:name="source/bombjack/bombjack.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="10"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="33"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="33"/>
     </file>
     <file xil_pn:name="source/bombjack/p2_switches.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="11"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="26"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="26"/>
     </file>
     <file xil_pn:name="source/bombjack/p3_timing.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="12"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="25"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="25"/>
     </file>
     <file xil_pn:name="source/bombjack/p4_sprites.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="13"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="24"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="24"/>
     </file>
     <file xil_pn:name="source/bombjack/p5_overlay.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="14"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="23"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="23"/>
     </file>
     <file xil_pn:name="source/bombjack/p6_char_gen.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="15"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="22"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="22"/>
     </file>
     <file xil_pn:name="source/bombjack/p7_bgnd_tiles.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="16"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="21"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="21"/>
     </file>
     <file xil_pn:name="source/bombjack/p8_palette_no_brams.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="17"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="20"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="20"/>
     </file>
     <file xil_pn:name="source/bombjack/p9_audio_cpu.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="18"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="19"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="19"/>
     </file>
     <file xil_pn:name="source/bombjack/p10_psgs.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="19"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="27"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="27"/>
     </file>
     <file xil_pn:name="source/bombjack/prog_roms_ramb.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="20"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="18"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="18"/>
     </file>
     <file xil_pn:name="source/bombjack/sprite_buff.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="21"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="9"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="9"/>
     </file>
     <file xil_pn:name="source/common/T80/T80.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="22"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="5"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="5"/>
     </file>
     <file xil_pn:name="source/common/T80/T80_ALU.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="23"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="4"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="4"/>
     </file>
     <file xil_pn:name="source/common/T80/T80_MCode.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="24"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="3"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="3"/>
     </file>
     <file xil_pn:name="source/common/T80/T80_Pack.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="25"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="1"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="1"/>
     </file>
     <file xil_pn:name="source/common/T80/T80_RegX.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="26"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="2"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="2"/>
     </file>
     <file xil_pn:name="source/common/T80/T80sed.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="27"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="7"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="7"/>
     </file>
     <file xil_pn:name="source/common/ym2149/YM2149_linmix.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="28"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="6"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="6"/>
     </file>
     <file xil_pn:name="build/ROM_1J.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="29"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="15"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="15"/>
     </file>
     <file xil_pn:name="build/ROM_1L.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="30"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="14"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="14"/>
     </file>
     <file xil_pn:name="build/ROM_1M.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="31"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="13"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="13"/>
     </file>
     <file xil_pn:name="build/ROM_1N.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="32"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="12"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="12"/>
     </file>
     <file xil_pn:name="build/ROM_1R.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="33"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="11"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="11"/>
     </file>
     <file xil_pn:name="build/ROM_3H.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="34"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="10"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="10"/>
     </file>
     <file xil_pn:name="source/boards/papilio_plus/testbed/papilio_top_tb.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="35"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="37"/>
       <association xil_pn:name="PostMapSimulation" xil_pn:seqID="35"/>
       <association xil_pn:name="PostRouteSimulation" xil_pn:seqID="35"/>
       <association xil_pn:name="PostTranslateSimulation" xil_pn:seqID="35"/>
     </file>
     <file xil_pn:name="source/boards/papilio_plus/testbed/rom_tb.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="36"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="35"/>
       <association xil_pn:name="PostMapSimulation" xil_pn:seqID="36"/>
       <association xil_pn:name="PostRouteSimulation" xil_pn:seqID="36"/>
       <association xil_pn:name="PostTranslateSimulation" xil_pn:seqID="36"/>
     </file>
     <file xil_pn:name="source/common/clocks.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="37"/>
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="32"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="32"/>
     </file>
     <file xil_pn:name="source/boards/papilio_plus/papilioplus.ucf" xil_pn:type="FILE_UCF">

@@ -29,13 +29,12 @@
 -- v0.8
 --
 -- fixed: color palette access contention between CPU and video, causing glitches to appear on a few scan lines between screen transitions
+-- fixed: Last 8 pixels of the last video line not showing, can be observed quring squares test pattern (not visible in game)
+--		this issue is due to /vblank signal rising too early (see page 8 chips 8B, 7A) clearing the video output while
+--		there are still 8 pixels left to shift out. Extended the vblank signal to compensate, but this deviates from schemtatic.
 --
 --	Known Issues
 --
--- Last 8 pixels of the last video line not showing, can be observed quring squares test pattern (not visible in game)
---		this issue is due to /vblank signal rising too early (see page 8 chips 8B, 7A) clearing the video output while
---		there are 8 pixels left to shift out. Unclear why this is happening as all video timing signals are derived from
---		the H and V counters and I have triple checked for errors, can't see the cause. Minor cosmetic issue.
 
 library ieee;
 	use ieee.std_logic_1164.all;
@@ -141,8 +140,6 @@ architecture RTL of BOMB_JACK is
 	signal s_grn				: std_logic_vector( 3 downto 0) := (others => '0');
 	signal s_blu				: std_logic_vector( 3 downto 0) := (others => '0');
 	signal dummy				: std_logic_vector( 3 downto 0) := (others => '0');
-
-	signal ram_state_ctr		: std_logic_vector( 5 downto 0) := (others => '0');
 
 	-- player controls
 	signal psg_data_out		: std_logic_vector( 7 downto 0) := (others => '0');

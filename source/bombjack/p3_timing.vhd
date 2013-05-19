@@ -101,8 +101,9 @@ architecture RTL of timing is
 	signal s_2V					: std_logic := '0';
 	signal s_4V					: std_logic := '0';
 	signal s_8V					: std_logic := '0';
+	signal s_8V_t1				: std_logic := '0';
 	signal s_16V				: std_logic := '0';
-	signal s_16V_t1			: std_logic := '0';
+--	signal s_16V_t1			: std_logic := '0';
 	signal s_32V				: std_logic := '0';
 	signal s_64V				: std_logic := '0';
 	signal s_128V				: std_logic := '0';
@@ -224,15 +225,27 @@ begin
 		end if;
 	end process;
 
-	-- chip 5P9 page 3
+	-- chip 5P9 page 3 - original as per schematic
+--	U5P9 : process
+--	begin
+--		wait until rising_edge(I_CLK_12M);
+--		s_16V_t1 <= s_16V;
+--		-- detect rising edge of s_16V
+--		if (s_16V = '1' and s_16V_t1 = '0') then
+--			-- chip 4N8 page 3
+--			s_vblank_n <= not (s_32V and s_64V and s_128V);
+--		end if;
+--	end process;
+
+	-- chip 5P9 page 3 - deviation from schematic to extend the blanking signal
 	U5P9 : process
 	begin
 		wait until rising_edge(I_CLK_12M);
-		s_16V_t1 <= s_16V;
+		s_8V_t1 <= s_8V;
 		-- detect rising edge of s_16V
-		if (s_16V = '1' and s_16V_t1 = '0') then
+		if (s_8V = '1' and s_8V_t1 = '0') then
 			-- chip 4N8 page 3
-			s_vblank_n <= not (s_32V and s_64V and s_128V);
+			s_vblank_n <= not (s_16V and s_32V and s_64V and s_128V);
 		end if;
 	end process;
 
@@ -251,9 +264,13 @@ begin
 	O_SLOAD_n <=     s_sload_n;
 	O_SLOAD   <= not s_sload_n;
 
-	-- SL1 and SL2 generated as clock enables for 12M
-	O_SL1_n   <= s_SL1_n_t0 or not s_SL1_n_t1;
-	O_SL2_n   <= s_SL2_n_t0 or not s_SL2_n_t1;
+	-- chip 7S page 3
+	O_CONTROLDA_n <= s_sload_n or s_8H or s_6T4 or      s_1V;
+	O_CONTROLDB_n <= s_sload_n or s_8H or s_6T4 or (not s_1V);
+
+	-- generate 12M negative enables on signal rising edge
+	O_SL1_n   <= s_SL1_n_t1 or not s_SL1_n_t0;
+	O_SL2_n   <= s_SL2_n_t1 or not s_SL2_n_t0;
 
 	-- chips 1S12, 1S8 page 3
 	SL_p : process
@@ -264,6 +281,25 @@ begin
 
 		s_SL1_n_t0	<= not (s_1H and (not s_2H) and (not s_4H) );
 		s_SL2_n_t0	<= not (s_1H and      s_2H  and (not s_4H) );
+	end process;
+
+	-- generate 12M negative enables on signal rising edge
+	O_MDL_n	<= s_MDL_n_t1 or not s_MDL_n_t0;
+	O_CDL_n	<= s_CDL_n_t1 or not s_CDL_n_t0;
+	O_VPL_n	<= s_VPL_n_t1 or not s_VPL_n_t0;
+
+	-- chip 7R, 4S9 page 3
+	U7R : process
+	begin
+		-- runs off falling edge of /6MHz, here we just detect signal edges
+		wait until falling_edge(I_CLK_12M);
+		s_MDL_n_t1 <= s_MDL_n_t0;
+		s_CDL_n_t1 <= s_CDL_n_t0;
+		s_VPL_n_t1 <= s_VPL_n_t0;
+
+		s_MDL_n_t0	<= ( s_1H or (    s_2H) or (    s_4H) );
+		s_CDL_n_t0	<= ( s_1H or (not s_2H) or (    s_4H) );
+		s_VPL_n_t0	<= ( s_1H or (    s_2H) or (not s_4H) );
 	end process;
 
 	-- chip 1T3 page 3
@@ -314,29 +350,6 @@ begin
 			end if;
 		end if;
 	end process;
-
-	-- chip 7R, 4S9 page 3
-	U7R : process
-	begin
-		-- runs off falling edge of /6MHz, here we just detect signal edges
-		wait until falling_edge(I_CLK_12M);
-		s_MDL_n_t1 <= s_MDL_n_t0;
-		s_CDL_n_t1 <= s_CDL_n_t0;
-		s_VPL_n_t1 <= s_VPL_n_t0;
-
-		s_MDL_n_t0	<= ( s_1H or (    s_2H) or (    s_4H) );
-		s_CDL_n_t0	<= ( s_1H or (not s_2H) or (    s_4H) );
-		s_VPL_n_t0	<= ( s_1H or (    s_2H) or (not s_4H) );
-	end process;
-
-	-- generate 12M negative enables on signal rising edge
-	O_MDL_n	<= s_MDL_n_t1 or not s_MDL_n_t0;
-	O_CDL_n	<= s_CDL_n_t1 or not s_CDL_n_t0;
-	O_VPL_n	<= s_VPL_n_t1 or not s_VPL_n_t0;
-
-	-- chip 7S page 3
-	O_CONTROLDA_n <= s_sload_n or s_8H or s_6T4 or      s_1V;
-	O_CONTROLDB_n <= s_sload_n or s_8H or s_6T4 or (not s_1V);
 
 	-- chip 6T4 page 3
 	s_6T4 <= s_5T8 and s_16H;

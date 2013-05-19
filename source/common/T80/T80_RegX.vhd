@@ -86,22 +86,6 @@ entity T80_Reg is
 end T80_Reg;
 
 architecture rtl of T80_Reg is
-	component RAM16X1D
-		port(
-			DPO			: out std_ulogic;
-			SPO			: out std_ulogic;
-			A0				: in std_ulogic;
-			A1				: in std_ulogic;
-			A2				: in std_ulogic;
-			A3				: in std_ulogic;
-			D				: in std_ulogic;
-			DPRA0			: in std_ulogic;
-			DPRA1			: in std_ulogic;
-			DPRA2			: in std_ulogic;
-			DPRA3			: in std_ulogic;
-			WCLK			: in std_ulogic;
-			WE				: in std_ulogic);
-	end component;
 
 	signal      ENH             : std_logic;
 	signal      ENL             : std_logic;

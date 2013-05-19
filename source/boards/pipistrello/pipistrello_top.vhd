@@ -96,7 +96,7 @@ architecture RTL of PIPISTRELLO_TOP is
 	signal s_audio				: std_logic_vector( 7 downto 0) := (others => '0');
 
 	signal s_cmpblk_n			: std_logic := '1';
-	signal s_cmpblk_x4_n		: std_logic := '1';
+	signal s_cmpblk_n_out	: std_logic := '1';
 	signal s_dac_out			: std_logic := '1';
 	signal s_hsync_n			: std_logic := '1';
 	signal s_vsync_n			: std_logic := '1';
@@ -296,22 +296,26 @@ begin
 	-- video scan converter required to display video on VGA hardware
 	-----------------------------------------------------------------
 	-- game native resolution 224x256
-	-- take note: the values below are relative to the CLK_X4 period not standard VGA clock period
+	-- take note: the values below are relative to the CLK period not standard VGA clock period
 	scan_conv : entity work.VGA_SCANCONV
 	generic map (
-		hA				=>  16,	-- h front porch
-		hB				=>  92,	-- h sync
-		hC				=>  46,	-- h back porch
-		hres			=> 512,	-- visible video
-		hpad			=>  51,	-- padding either side to reach standard VGA resolution (hres + 2*hpad = hD)
-
-		vB				=>   2,	-- v sync
-		vC				=>  32,	-- v back porch
-		vres			=> 448,	-- visible video
-		vpad			=>  16,	-- padding either side to reach standard VGA resolution (vres + vpad = vD)
-
+		-- mark active area of input video
 		cstart      =>  56,  -- composite sync start
-		clength     => 256   -- composite sync length
+		clength     => 256,  -- composite sync length
+
+		-- output video timing
+		hA				=>  16,	-- h front porch
+		hB				=>  46,	-- h sync
+		hC				=>  16,	-- h back porch
+		hD				=> 256,	-- visible video
+
+--		vA				=>   8,	-- v front porch (not used)
+		vB				=>   2,	-- v sync
+		vC				=>  14,	-- v back porch
+		vD				=> 224,	-- visible video
+
+		hpad			=>  25,	-- create H black border
+		vpad			=>   8	-- create V black border
 	)
 	port map (
 		I_VIDEO(15 downto 12)=> "0000",
@@ -327,10 +331,10 @@ begin
 		O_VIDEO( 3 downto 0) => VideoB,
 		O_HSYNC					=> HSync,
 		O_VSYNC					=> VSync,
-		O_CMPBLK_N				=> s_cmpblk_x4_n,
+		O_CMPBLK_N				=> s_cmpblk_n_out,
 		--
 		CLK						=> clk_6M_en,
-		CLK_X4					=> clk_24M
+		CLK_x2					=> clk_12M
 	);
 
 	OBUFDS_clk : OBUFDS port map ( O => TMDS_P(3), OB => TMDS_N(3), I => clk_s );
@@ -338,7 +342,7 @@ begin
 	OBUFDS_red : OBUFDS port map ( O => TMDS_P(1), OB => TMDS_N(1), I => grn_s );
 	OBUFDS_blu : OBUFDS port map ( O => TMDS_P(0), OB => TMDS_N(0), I => blu_s );
 
-	s_blank <= not s_cmpblk_x4_n;
+	s_blank <= not s_cmpblk_n_out;
 
 	inst_dcm : DCM_SP
 		generic map (
